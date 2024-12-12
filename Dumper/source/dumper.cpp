@@ -14,8 +14,9 @@
 #define ARIFM_TREE_ERR_CHECK(error) \
     COMMON_IF_SUBMODULE_ERR_RETURN(error, getArifmTreeErrorMessage, ARIFM_TREE_STATUS_OK, DUMPER_ERROR_ARIFM_TREE_ERROR);
 
-#define ARIFM_OPS_ERR_CHECK(error) \
-    COMMON_IF_SUBMODULE_ERR_RETURN(error, getArifmOperationsErrorMessage, ARIFM_OPERATIONS_STATUS_OK, DUMPER_ERROR_ARIFM_OPS_ERROR);
+// TODO: add error appropriate
+#define LEXEMS_REALIZATION_ERR_CHECK(error) \
+    COMMON_IF_SUBMODULE_ERR_RETURN(error, getLexemsRealizationsErrorMessage, LEXEMS_REALIZATIONS_STATUS_OK, DUMPER_ERROR_ARIFM_OPS_ERROR);
 
 const size_t FILE_NAME_BUFFER_SIZE      = 100;
 const size_t FULL_FILE_NAME_BUFFER_SIZE = 200;
@@ -122,44 +123,48 @@ static DumperErrors addNodeDumpStructToBuffer(const Dumper* dumper,
                                               const char* color,
                                               const char* borderColor,
                                               const DumperSettings* settings) {
-    IF_ARG_NULL_RETURN(dumper);
-    IF_ARG_NULL_RETURN(settings);
-    IF_ARG_NULL_RETURN(buffer);
 
-    memset(tmpBuffer, 0, TMP_BUFFER_SIZE);
-    if (node != NULL) {
-        char* nodesDataStr = NULL;
-        ARIFM_OPS_ERR_CHECK(arifmTreeNodeToString(node, &nodesDataStr,
-                                                  &settings->node2stringSettings));
-        //LOG_DEBUG_VARS(nodesDataStr, node->data, node->memBuffIndex);
+    assert(false);
 
-        char* tmpPtr = tmpBuffer;
-        //LOG_DEBUG_VARS(color);
-        tmpPtr += snprintf(tmpPtr, TMP_BUFFER_SIZE - (tmpPtr - tmpBuffer),
-        "iamnode_id_%zu [shape=circle, style=filled, fillcolor=\"%s\" margin=0, penwidth=\"3%\" fontcolor=white, color=\"%s\", label=< \n"
-            "<TABLE cellspacing=\"0\" border=\"0\"> \n"
-                "<TR><TD colspan=\"2\">%s</TD></TR>\n",
-                node->memBuffIndex, color, borderColor, nodesDataStr); // Mrecord
-
-        if (settings->isMemIndexesInfoNeeded) {
-            tmpPtr += snprintf(tmpPtr, TMP_BUFFER_SIZE - (tmpPtr - tmpBuffer),
-                    "<TR><TD colspan=\"2\">memIndex:  %zu</TD></TR>\n"
-                    "<TR><TD>left:  %zu</TD>\n"
-                    "<TD>right: %zu</TD></TR>\n",
-                    node->memBuffIndex, node->left, node->right);
-        }
-
-        tmpPtr += snprintf(tmpPtr, TMP_BUFFER_SIZE - (tmpPtr - tmpBuffer),"</TABLE> \n" " >];\n");
-
-        FREE(nodesDataStr);
-        // LOG_DEBUG_VARS(tmpBuffer, node->data);
-    } else {
-        snprintf(tmpBuffer, TMP_BUFFER_SIZE,
-            "iamnode_id_%zu [shape=rect, margin=0, fontcolor=white, color=%s, label=<null>];\n",
-            node->memBuffIndex, color);
-    }
-
-    strncat(buffer, tmpBuffer, BUFFER_SIZE);
+    // TODO:
+//     IF_ARG_NULL_RETURN(dumper);
+//     IF_ARG_NULL_RETURN(settings);
+//     IF_ARG_NULL_RETURN(buffer);
+//
+//     memset(tmpBuffer, 0, TMP_BUFFER_SIZE);
+//     if (node != NULL) {
+//         char* nodesDataStr = NULL;
+//         ARIFM_OPS_ERR_CHECK(arifmTreeNodeToString(node, &nodesDataStr,
+//                                                   &settings->node2stringSettings));
+//         //LOG_DEBUG_VARS(nodesDataStr, node->data, node->memBuffIndex);
+//
+//         char* tmpPtr = tmpBuffer;
+//         //LOG_DEBUG_VARS(color);
+//         tmpPtr += snprintf(tmpPtr, TMP_BUFFER_SIZE - (tmpPtr - tmpBuffer),
+//         "iamnode_id_%zu [shape=circle, style=filled, fillcolor=\"%s\" margin=0, penwidth=\"3%\" fontcolor=white, color=\"%s\", label=< \n"
+//             "<TABLE cellspacing=\"0\" border=\"0\"> \n"
+//                 "<TR><TD colspan=\"2\">%s</TD></TR>\n",
+//                 node->memBuffIndex, color, borderColor, nodesDataStr); // Mrecord
+//
+//         if (settings->isMemIndexesInfoNeeded) {
+//             tmpPtr += snprintf(tmpPtr, TMP_BUFFER_SIZE - (tmpPtr - tmpBuffer),
+//                     "<TR><TD colspan=\"2\">memIndex:  %zu</TD></TR>\n"
+//                     "<TR><TD>left:  %zu</TD>\n"
+//                     "<TD>right: %zu</TD></TR>\n",
+//                     node->memBuffIndex, node->left, node->right);
+//         }
+//
+//         tmpPtr += snprintf(tmpPtr, TMP_BUFFER_SIZE - (tmpPtr - tmpBuffer),"</TABLE> \n" " >];\n");
+//
+//         FREE(nodesDataStr);
+//         // LOG_DEBUG_VARS(tmpBuffer, node->data);
+//     } else {
+//         snprintf(tmpBuffer, TMP_BUFFER_SIZE,
+//             "iamnode_id_%zu [shape=rect, margin=0, fontcolor=white, color=%s, label=<null>];\n",
+//             node->memBuffIndex, color);
+//     }
+//
+//     strncat(buffer, tmpBuffer, BUFFER_SIZE);
 
     return DUMPER_STATUS_OK;
 }
@@ -247,7 +252,7 @@ static const char* getNodeColor(const Node* node, const DumperSettings* settings
     return DEFAULT_COLOR; // maybe log error
 }
 
-static DumperErrors drawArifmTreeRecursively(const Dumper* dumper, const ArifmTree* tree,
+static DumperErrors drawArifmTreeRecursively(const Dumper* dumper, const SyntaxTree* tree,
                                              size_t nodeInd, size_t parentInd,
                                              const DumperSettings* settings) {
     IF_ARG_NULL_RETURN(dumper);
@@ -257,7 +262,7 @@ static DumperErrors drawArifmTreeRecursively(const Dumper* dumper, const ArifmTr
     if (nodeInd == 0) // subtree is empty
         return DUMPER_STATUS_OK;
 
-    Node node = *getArifmTreeNodePtr(tree, nodeInd);
+    Node node = *getSyntaxTreeNodePtr(tree, nodeInd);
 
     const char* borderColor = NULL;
     const char* color = getNodeColor(&node, settings, &borderColor);
@@ -267,7 +272,7 @@ static DumperErrors drawArifmTreeRecursively(const Dumper* dumper, const ArifmTr
     if (parentInd != 0) {
         memset(tmpBuffer, 0, TMP_BUFFER_SIZE);
 
-        Node parent = *getArifmTreeNodePtr(tree, parentInd);
+        Node parent = *getSyntaxTreeNodePtr(tree, parentInd);
         if (nodeInd == parent.left) {
             snprintf(tmpBuffer, TMP_BUFFER_SIZE, "iamnode_id_%zu -> iamnode_id_%zu [color=orange, fontcolor=white, weight=1]\n",
                 parentInd, nodeInd);
@@ -303,7 +308,7 @@ char* getLastImageFileName(const Dumper* dumper) {
 
 
 
-DumperErrors dumperDumpArifmTree(Dumper* dumper, const ArifmTree* tree,
+DumperErrors dumperDumpArifmTree(Dumper* dumper, const SyntaxTree* tree,
                                  const DumperSettings* settings) {
     IF_ARG_NULL_RETURN(dumper);
     IF_ARG_NULL_RETURN(settings);

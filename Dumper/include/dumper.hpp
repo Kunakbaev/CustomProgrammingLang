@@ -13,7 +13,7 @@ enum DumperErrors {
 
 #include "dumperStruct.hpp"
 #include "../../SyntaxTree/include/syntaxTree.hpp"
-//#include "../../ArifmOperations/include/arifmOperations.hpp"
+#include "../../LexemsRealizations/include/lexemsRealizations.hpp"
 
 const size_t MAX_COLORING_RULE_LEN                           = 20;
 const size_t MAX_NUM_OF_NODES_IN_ONE_COLOR_WITH_NODES_STRUCT = (size_t)1 << 18;
@@ -29,7 +29,7 @@ struct DumperSettings {
     const NodesWithColor* coloringRule;
     size_t                coloringRuleLen;
     bool                  isMemIndexesInfoNeeded;
-    Node2stringSettings   node2stringSettings;
+    Lexem2stringSettings   node2stringSettings;
 };
 
 DumperErrors dumperConstructor(Dumper* dumper,
@@ -39,7 +39,7 @@ DumperErrors dumperConstructor(Dumper* dumper,
 void dumperAddDebugInfoToAllLogsFile(const Dumper* dumper, const char* debugInfo);
 void dumperAddImgToAllLogsFile(const Dumper* dumper, const char* imagePath);
 DumperErrors dumperDumpSingleTreeNode(Dumper* dumper, const Node* node, const DumperSettings* settings);
-DumperErrors dumperDumpArifmTree(Dumper* dumper, const ArifmTree* tree, const DumperSettings* settings);
+DumperErrors dumperDumpArifmTree(Dumper* dumper, const SyntaxTree* tree, const DumperSettings* settings);
 char* getLastImageFileName(const Dumper* dumper);
 DumperErrors dumperDestructor(Dumper* dumper);
 

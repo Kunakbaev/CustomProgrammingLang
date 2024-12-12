@@ -51,72 +51,72 @@ LexemAnalysatorErrors constructLexemAnalysator(const char* sourceFilePath,
 
 
 
-
-
-static bool isDelimSkip(const char** ptr) {
-    assert(ptr != NULL);
-    assert(*ptr != NULL);
-
-    if (strchr(DELIMS, **ptr) != NULL) {
-        ++(*ptr);
-        return true;
-    }
-
-    return false;
-}
-
-static bool tryNumber(LexemAnalysator* analysator, const char** ptr) {
-    assert(analysator != NULL);
-    assert(ptr != NULL);
-    assert(*ptr != NULL);
-
-    if (!isdigit(**ptr)) {
-        return false;
-    }
-
-    errno = 0;
-    char* endPtr = (char*)*ptr; // WARNING:
-    double num = strtod(*ptr, &endPtr);
-    if (errno != 0) {
-        return false;
-    }
-
-    LOG_DEBUG_VARS(num, *ptr, endPtr);
-    assert(analysator->arrLen < MAX_NUM_OF_LEXEMS);
-    analysator->array[analysator->arrLen++] = {
-        .nodeType = ARIFM_TREE_NUMBER_NODE,
-        {.doubleData = num},
-        .left = 0, .right = 0,
-        .memBuffIndex = 0,
-        .parent = 0,
-    };
-    *ptr = endPtr;
-    return true;
-}
-
-static bool tryBracket(LexemAnalysator* analysator, const char** ptr) {
-    assert(analysator != NULL);
-    assert(ptr != NULL);
-    assert(*ptr != NULL);
-
-    char ch = **ptr;
-    if (ch != '(' && ch != ')')
-        return false;
-
-    assert(analysator->arrLen < MAX_NUM_OF_LEXEMS);
-    LOG_DEBUG_VARS("brackets");
-    analysator->array[analysator->arrLen++] = {
-        .nodeType = ARIFM_TREE_FUNC_NODE,
-        {.data = (size_t)ch}, // ASK: is this ok
-        .left = 0, .right = 0,
-        .memBuffIndex = 0,
-        .parent = 0,
-    };
-    ++(*ptr);
-
-    return true;
-}
-
+//
+//
+// static bool isDelimSkip(const char** ptr) {
+//     assert(ptr != NULL);
+//     assert(*ptr != NULL);
+//
+//     if (strchr(DELIMS, **ptr) != NULL) {
+//         ++(*ptr);
+//         return true;
+//     }
+//
+//     return false;
+// }
+//
+// static bool tryNumber(LexemAnalysator* analysator, const char** ptr) {
+//     assert(analysator != NULL);
+//     assert(ptr != NULL);
+//     assert(*ptr != NULL);
+//
+//     if (!isdigit(**ptr)) {
+//         return false;
+//     }
+//
+//     errno = 0;
+//     char* endPtr = (char*)*ptr; // WARNING:
+//     double num = strtod(*ptr, &endPtr);
+//     if (errno != 0) {
+//         return false;
+//     }
+//
+//     LOG_DEBUG_VARS(num, *ptr, endPtr);
+//     assert(analysator->arrLen < MAX_NUM_OF_LEXEMS);
+//     analysator->array[analysator->arrLen++] = {
+//         .nodeType = ARIFM_TREE_NUMBER_NODE,
+//         {.doubleData = num},
+//         .left = 0, .right = 0,
+//         .memBuffIndex = 0,
+//         .parent = 0,
+//     };
+//     *ptr = endPtr;
+//     return true;
+// }
+//
+// static bool tryBracket(LexemAnalysator* analysator, const char** ptr) {
+//     assert(analysator != NULL);
+//     assert(ptr != NULL);
+//     assert(*ptr != NULL);
+//
+//     char ch = **ptr;
+//     if (ch != '(' && ch != ')')
+//         return false;
+//
+//     assert(analysator->arrLen < MAX_NUM_OF_LEXEMS);
+//     LOG_DEBUG_VARS("brackets");
+//     analysator->array[analysator->arrLen++] = {
+//         .nodeType = ARIFM_TREE_FUNC_NODE,
+//         {.data = (size_t)ch}, // ASK: is this ok
+//         .left = 0, .right = 0,
+//         .memBuffIndex = 0,
+//         .parent = 0,
+//     };
+//     ++(*ptr);
+//
+//     return true;
+// }
+//
 void clearTmpString() {
     size_t strLen = strlen(tmpString);
     while (strLen > 0) {
@@ -124,75 +124,75 @@ void clearTmpString() {
     }
 }
 
-static bool tryReadFuncName(LexemAnalysator* analysator, const char* ptr) {
-    assert(tmpString != NULL);
-    assert(analysator != NULL);
+// static bool tryReadFuncName(LexemAnalysator* analysator, const char* ptr) {
+//     assert(tmpString != NULL);
+//     assert(analysator != NULL);
+//
+//     size_t strLen = strlen(tmpString);
+//     if (strLen == 1 && isalpha(*(ptr - 1)) && !isalpha(*ptr)) { // this is variable
+//         assert(analysator->arrLen < MAX_NUM_OF_LEXEMS);
+//         analysator->array[analysator->arrLen++] = {
+//             .nodeType = ARIFM_TREE_VAR_NODE,
+//             {.data = (size_t)(*(ptr - 1) - 'a')}, // ASK: is this ok
+//             .left = 0, .right = 0,
+//             .memBuffIndex = 0,
+//             .parent = 0,
+//         };
+//
+//         clearTmpString();
+//         return true;
+//     }
+//
+//     // string is too long, so we asume
+//     // FIXME: add err check
+//     Function func = {};
+//     ArifmOperationsErrors error = getFunctionByName(tmpString, &func);
+//     if (error == ARIFM_OPERATIONS_FUNC_NOT_FOUND) {
+//         return false;
+//     }
+//
+//     LOG_ERROR("----------");
+//     LOG_DEBUG_VARS("func name: ", tmpString);
+//     assert(analysator->arrLen < MAX_NUM_OF_LEXEMS);
+//     analysator->array[analysator->arrLen++] = {
+//         .type =
+//     };
+//
+//     clearTmpString();
+//
+//     return true;
+// }
 
-    size_t strLen = strlen(tmpString);
-    if (strLen == 1 && isalpha(*(ptr - 1)) && !isalpha(*ptr)) { // this is variable
-        assert(analysator->arrLen < MAX_NUM_OF_LEXEMS);
-        analysator->array[analysator->arrLen++] = {
-            .nodeType = ARIFM_TREE_VAR_NODE,
-            {.data = (size_t)(*(ptr - 1) - 'a')}, // ASK: is this ok
-            .left = 0, .right = 0,
-            .memBuffIndex = 0,
-            .parent = 0,
-        };
-
-        clearTmpString();
-        return true;
-    }
-
-    // string is too long, so we asume
-    // FIXME: add err check
-    Function func = {};
-    ArifmOperationsErrors error = getFunctionByName(tmpString, &func);
-    if (error == ARIFM_OPERATIONS_FUNC_NOT_FOUND) {
-        return false;
-    }
-
-    LOG_ERROR("----------");
-    LOG_DEBUG_VARS("func name: ", tmpString);
-    assert(analysator->arrLen < MAX_NUM_OF_LEXEMS);
-    analysator->array[analysator->arrLen++] = {
-        .type =
-    };
-
-    clearTmpString();
-
-    return true;
-}
-
-LexemAnalysatorErrors getArrayOfLexems(LexemAnalysator* analysator) {
-    IF_ARG_NULL_RETURN(analysator);
-
-    analysator->arrLen = 0;
-    tmpString = (char*)calloc(MAX_INPUT_LINE_LEN, sizeof(char));
-    IF_NOT_COND_RETURN(tmpString != NULL,
-                       LEXEM_ANALYSATOR_MEMORY_ALLOCATION_ERROR);
-
-    const char* ptr = analysator->inputString;
-    while (*ptr != '\0') {
-        LOG_ERROR("----------");
-        if (isDelimSkip(            &ptr))      continue;
-        if (tryNumber  (analysator, &ptr))      continue;
-        if (tryBracket (analysator, &ptr))      continue;
-
-        size_t tmpStringLen = strlen(tmpString);
-        assert(tmpStringLen < MAX_INPUT_LINE_LEN);
-        tmpString[tmpStringLen] = *ptr;
-        ++ptr;
-        if (tryReadFuncName(analysator, ptr)) continue;
-    }
-
-    (analysator->array)[analysator->arrLen] =  { // terminal element, just like \0 is in string
-        .type = INVALID_LEXEM_TYPE,
-        .strRepr = NULL,
-        {.data = 0},
-    };
-
-    return LEXEM_ANALYSATOR_STATUS_OK;
-}
+// LexemAnalysatorErrors getArrayOfLexems(LexemAnalysator* analysator) {
+//     IF_ARG_NULL_RETURN(analysator);
+//
+//     analysator->arrLen = 0;
+//     tmpString = (char*)calloc(MAX_INPUT_LINE_LEN, sizeof(char));
+//     IF_NOT_COND_RETURN(tmpString != NULL,
+//                        LEXEM_ANALYSATOR_MEMORY_ALLOCATION_ERROR);
+//
+//     const char* ptr = analysator->inputString;
+//     while (*ptr != '\0') {
+//         LOG_ERROR("----------");
+//         if (isDelimSkip(            &ptr))      continue;
+//         if (tryNumber  (analysator, &ptr))      continue;
+//         if (tryBracket (analysator, &ptr))      continue;
+//
+//         size_t tmpStringLen = strlen(tmpString);
+//         assert(tmpStringLen < MAX_INPUT_LINE_LEN);
+//         tmpString[tmpStringLen] = *ptr;
+//         ++ptr;
+//         if (tryReadFuncName(analysator, ptr)) continue;
+//     }
+//
+//     (analysator->array)[analysator->arrLen] =  { // terminal element, just like \0 is in string
+//         .type = INVALID_LEXEM_TYPE,
+//         .strRepr = NULL,
+//         {.data = 0},
+//     };
+//
+//     return LEXEM_ANALYSATOR_STATUS_OK;
+// }
 
 LexemAnalysatorErrors getArrayOfLexems(LexemAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
@@ -206,13 +206,21 @@ LexemAnalysatorErrors getArrayOfLexems(LexemAnalysator* analysator) {
 
     for (size_t i = 0; i < analysator->inputStringLen; ++i) {
         char curCh = i < analysator->inputStringLen ? analysator->inputString[i] : ' '; // ' ' is delimeter
-        if (isCharLexemDelim(curCh)) {
-            initLexemWithString(tmpString, &analysator->array[i]);
+        bool isDelim = false;
+        isCharLexemDelim(curCh, &isDelim);
+        isDelim |= curCh == ' ' || curCh == '\n' || curCh == '\t';
+
+        LOG_DEBUG_VARS(curCh, i, isDelim);
+        if (isDelim) {
+            Lexem* lexem = &analysator->array[analysator->arrLen++];
+            initLexemWithString(tmpString, lexem); // TODO: add error check
             clearTmpString();
         }
 
-        tmpString = strcat(tmpString, curCh);
+        tmpString[i] = curCh;
     }
+
+    IF_ERR_RETURN(dumpLexemAnalysator(analysator));
 
     return LEXEM_ANALYSATOR_STATUS_OK;
 }

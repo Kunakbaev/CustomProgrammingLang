@@ -3,7 +3,7 @@
 
 #include "errorsHandler.hpp"
 #include "../../Dumper/include/dumperStruct.hpp"
-#include "../../SyntaxTree/include/syntaxTree.hpp"
+//#include "../../SyntaxTree/include/syntaxTree.hpp"
 
 /*
 
@@ -44,6 +44,7 @@ struct Lexem2stringSettings {
 };
 
 LexemsRealizationsErrors initLexemWithString(const char* line, Lexem* lexem);
+LexemsRealizationsErrors isCharLexemDelim(const char ch, bool* isDelim);
 LexemsRealizationsErrors saveLexemToFile(FILE* file, const Lexem* lexem);
 
 #endif

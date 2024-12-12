@@ -3,7 +3,7 @@
 
 #include <assert.h>
 
-#include "logLib.hpp"
+#include "../../external/LoggerLib/include/logLib.hpp"
 #include "utils.hpp"
 
 // bruh, auto is C++ feature, can pass error type to define, no big deal

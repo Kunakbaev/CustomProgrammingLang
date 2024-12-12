@@ -27,7 +27,7 @@ Lexem allLexemsArr[] = {
 
 const size_t LEXEM_ARR_SIZE = sizeof(allLexemsArr) / sizeof(*allLexemsArr);
 
-// super slow TODO:
+// TODO: super slow
 LexemsRealizationsErrors initLexemWithString(const char* line, Lexem* lexem) {
     IF_ARG_NULL_RETURN(line);
     IF_ARG_NULL_RETURN(lexem);
@@ -62,7 +62,22 @@ LexemsRealizationsErrors initLexemWithString(const char* line, Lexem* lexem) {
     return LEXEMS_REALIZATIONS_STATUS_OK;
 }
 
-isCharLexemDelim
+LexemsRealizationsErrors isCharLexemDelim(const char ch, bool* isDelim) {
+    IF_ARG_NULL_RETURN(isDelim);
+
+    *isDelim = false;
+    char line[] = { ch, '\0' };
+    for (int i = 0; i < LEXEM_ARR_SIZE; ++i) {
+        bool isSame = strcmp(allLexemsArr[i].strRepr, line) == 0;
+        if (isSame && allLexemsArr[i].type == DELIM_LEXEM_TYPE) { // second operand is just to be sure, it should not necessary as we check strings for equality
+            *isDelim = true;
+            return LEXEMS_REALIZATIONS_STATUS_OK;
+        }
+    }
+
+
+    return LEXEMS_REALIZATIONS_STATUS_OK;
+}
 
 LexemsRealizationsErrors saveLexemToFile(FILE* file, const Lexem* lexem) {
     IF_ARG_NULL_RETURN(file);

@@ -20,7 +20,7 @@ SyntaxTreeErrors getCopyOfTree(const SyntaxTree* source, SyntaxTree* dest);
 size_t getCopyOfSubtree(const SyntaxTree* tree, SyntaxTree* destTree,
                         size_t srcNodeInd);
 Node* getSyntaxTreeNodePtr(const SyntaxTree* tree, size_t nodeInd);
-size_t constructNodeWithKidsNoErrors(SyntaxTree* tree, TreeNodeType nodeType, const NodeDataUnion data,
+size_t constructNodeWithKidsNoErrors(SyntaxTree* tree, LexemType lexemType, const NodeDataUnion data,
                                      size_t leftSon,  size_t rightSon);
 SyntaxTreeErrors validateSyntaxTree(const SyntaxTree* tree);
 SyntaxTreeErrors dumpSyntaxTreeInConsole(const SyntaxTree* tree);
