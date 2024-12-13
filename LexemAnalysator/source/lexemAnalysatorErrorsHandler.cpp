@@ -1,8 +1,8 @@
-#include "../include/errorsHandler.hpp"
+#include "../include/lexemAnalysatorErrorsHandler.hpp"
 
 const char* getLexemAnalysatorErrorMessage(LexemAnalysatorErrors error) {
     #define ERROR_UNPACK(errName, errCode, errMessage)          \
-        case READER_##errName:                                           \
+        case LEXEM_ANALYSATOR_##errName:                                           \
             return "Lexem analysator error: " errMessage ".\n";    \
 
     switch (error) {

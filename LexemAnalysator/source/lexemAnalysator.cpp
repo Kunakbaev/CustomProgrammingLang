@@ -47,6 +47,8 @@ LexemAnalysatorErrors constructLexemAnalysator(const char* sourceFilePath,
         .inputString    = NULL,
         .inputStringLen = 0,
     };
+
+    return LEXEM_ANALYSATOR_STATUS_OK;
 }
 
 
@@ -204,23 +206,36 @@ LexemAnalysatorErrors getArrayOfLexems(LexemAnalysator* analysator) {
     //strcat(analysator->inputString, "\n"); // adding delim to the end of line
 
 
+    tmpString = (char*)calloc(MAX_INPUT_LINE_LEN, sizeof(char));
+    IF_NOT_COND_RETURN(tmpString != NULL, LEXEM_ANALYSATOR_MEMORY_ALLOCATION_ERROR);
+
+    const char* naturalDelims = "\t\n ";
+    size_t curCharInd = 0;
     for (size_t i = 0; i < analysator->inputStringLen; ++i) {
         char curCh = i < analysator->inputStringLen ? analysator->inputString[i] : ' '; // ' ' is delimeter
         bool isDelim = false;
         isCharLexemDelim(curCh, &isDelim);
-        isDelim |= curCh == ' ' || curCh == '\n' || curCh == '\t';
 
-        LOG_DEBUG_VARS(curCh, i, isDelim);
-        if (isDelim) {
-            Lexem* lexem = &analysator->array[analysator->arrLen++];
-            initLexemWithString(tmpString, lexem); // TODO: add error check
-            clearTmpString();
+        bool isNaturalDelim = strchr(naturalDelims, curCh) != NULL;
+        //LOG_DEBUG_VARS(curCh, i, tmpString, isDelim, isNaturalDelim);
+        if (isDelim || isNaturalDelim) {
+            if (strlen(tmpString) > 0) {
+                Lexem* lexem = &analysator->array[analysator->arrLen++];
+                initLexemWithString(tmpString, lexem); // TODO: add error check
+                clearTmpString();
+            }
+
+            //LOG_DEBUG_VARS("-----------------");
+            curCharInd = 0;
+            if (!isDelim)
+                continue;
         }
 
-        tmpString[i] = curCh;
+        tmpString[curCharInd++] = curCh;
     }
 
     IF_ERR_RETURN(dumpLexemAnalysator(analysator));
+    FREE(tmpString);
 
     return LEXEM_ANALYSATOR_STATUS_OK;
 }
@@ -243,15 +258,19 @@ LexemAnalysatorErrors processSourceFile(LexemAnalysator* analysator) {
 
     size_t fileSize = getFileSize(file);
     analysator->inputStringLen = fileSize;
+    LOG_DEBUG_VARS(fileSize);
     analysator->inputString = (char*)calloc(fileSize + 1, sizeof(char)); // +1 for \0 symbol
     IF_NOT_COND_RETURN(analysator->inputString != NULL,
                        LEXEM_ANALYSATOR_MEMORY_ALLOCATION_ERROR);
 
-    const char* inputStringPtr = analysator->inputString;
+    char* inputStringPtr = analysator->inputString;
     char lineBuffer[MAX_INPUT_LINE_LEN] = {};
     while (fgets(lineBuffer, MAX_INPUT_LINE_LEN, file)) {
-        inputStringPtr += snprintf("%s%s", fileSize - (inputStringPtr - analysator->inputString),
-                                   inputStringPtr, lineBuffer);
+        LOG_DEBUG_VARS(lineBuffer, inputStringPtr);
+        size_t leftSpace = fileSize - (inputStringPtr - analysator->inputString);
+        strncat(inputStringPtr, lineBuffer, leftSpace);
+        // inputStringPtr += snprintf("%s%s", fileSize - (inputStringPtr - analysator->inputString),
+        //                            inputStringPtr, lineBuffer);
     }
     LOG_DEBUG_VARS(analysator->inputString);
     LOG_DEBUG_VARS(analysator->inputStringLen);
@@ -270,7 +289,7 @@ LexemAnalysatorErrors saveArrayOfLexems2File(LexemAnalysator* analysator) {
     for (size_t i = 0; i < analysator->arrLen; ++i) {
         Lexem lexem = analysator->array[i];
         size_t lexemType = lexem.type;
-        size_t data = lexem.data;
+        size_t specName = lexem.lexemSpecificName;
         double doubleData = lexem.doubleData;
 
         saveLexemToFile(file, &lexem);
@@ -295,15 +314,27 @@ LexemAnalysatorErrors dumpLexemAnalysator(LexemAnalysator* analysator) {
 
     for (size_t i = 0; i < analysator->arrLen; ++i) {
         Lexem lexem = analysator->array[i];
-        size_t nodeType = lexem.type;
-        size_t data = lexem.data;
-        double doubleData = lexem.doubleData;
-        LOG_DEBUG_VARS(i, nodeType, data, doubleData);
+        char* line = NULL;
+        getLexemDebugString(&lexem, &line);
+        const char* lexemType = getLexemTypeString(lexem.type);
+        LOG_DEBUG_VARS(i, lexemType, line);
+        FREE(line);
     }
     LOG_DEBUG_VARS("--------------------------");
 
     return LEXEM_ANALYSATOR_STATUS_OK;
 }
 
-LexemAnalysatorErrors openCurImageOfLexemAnalysator(LexemAnalysator* analysator);;
+LexemAnalysatorErrors openCurImageOfLexemAnalysator(LexemAnalysator* analysator);
+
+LexemAnalysatorErrors destructLexemAnalysator(LexemAnalysator* analysator) {
+    IF_ARG_NULL_RETURN(analysator);
+
+    FREE(analysator->array);
+    FREE(analysator->inputString);
+    analysator->arrLen = 0;
+    analysator->inputStringLen = 0;
+
+    return LEXEM_ANALYSATOR_STATUS_OK;
+}
 

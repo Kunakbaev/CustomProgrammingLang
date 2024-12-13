@@ -24,8 +24,9 @@ endif
 # SRC 	   		   := $(SOURCE_DIR)/decisionTreeErrors.cpp $(SOURCE_DIR)/decisionTreeLib.cpp $(SOURCE_DIR)/dumper.cpp $(SOURCE_DIR)/main.cpp
 SRC := 						\
 	$(LEXEM_REALIZATIONS_PATH)/lexemsRealizations.cpp\
-	$(DUMPER_MODULE_PATH)/dumper.cpp		\
+	$(LEXEM_REALIZATIONS_PATH)/errorsHandler.cpp\
 	$(SOURCE_DIR)/main.cpp					\
+	$(SOURCE_DIR)/lexemAnalysatorErrorsHandler.cpp					\
 	$(SOURCE_DIR)/lexemAnalysator.cpp					\
 
 OBJ := $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(notdir ${SRC}))
@@ -41,8 +42,8 @@ $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp | $(BUILD_DIR)
 $(BUILD_DIR)/%.o: $(LEXEM_REALIZATIONS_PATH)/%.cpp | $(BUILD_DIR)
 	$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
 
-$(BUILD_DIR)/%.o: $(DUMPER_MODULE_PATH)/%.cpp | $(BUILD_DIR)
-	$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
+# $(BUILD_DIR)/%.o: $(DUMPER_MODULE_PATH)/%.cpp | $(BUILD_DIR)
+# 	$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
 
 # WARNING: always cleans building directory
 

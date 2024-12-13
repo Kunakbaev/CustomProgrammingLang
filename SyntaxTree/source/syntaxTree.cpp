@@ -14,15 +14,17 @@ static void initMemBuff(SyntaxTree* tree) {
     for (size_t nodeInd = 0; nodeInd < tree->memBuffSize; ++nodeInd) {
         Node* node = &tree->memBuff[nodeInd];
         node->memBuffIndex = nodeInd;
-        node->nodeType     = SYNTAX_TREE_INVALID_NODE;
+        node->lexem = {
+            .type = INVALID_LEXEM_TYPE,
+            .strRepr = NULL,
+            .lexemSpecificName = INVALID_LEXEM,
+        };
     }
 }
 
 SyntaxTreeErrors constructSyntaxTree(SyntaxTree* tree, Dumper* dumper) {
     IF_ARG_NULL_RETURN(tree);
     IF_ARG_NULL_RETURN(dumper);
-
-    ARIFM_OPS_ERR_CHECK(validateArifmOperationsArrays());
 
     tree->root              = 0;
     tree->memBuff           = (Node*)calloc(MIN_MEM_BUFF_SIZE, sizeof(Node));
@@ -37,32 +39,18 @@ SyntaxTreeErrors constructSyntaxTree(SyntaxTree* tree, Dumper* dumper) {
     return SYNTAX_TREE_STATUS_OK;
 }
 
-static SyntaxTreeErrors constructNode(SyntaxTree* tree, Node* node, TreeNodeType nodeType, const NodeDataUnion data) {
+static SyntaxTreeErrors constructNode(SyntaxTree* tree, Node* node, const Lexem* lexem, const NodeDataUnion data) {
     IF_ARG_NULL_RETURN(tree);
     IF_ARG_NULL_RETURN(node);
+    IF_ARG_NULL_RETURN(lexem);
 
-    node->left     = node->right = node->parent = 0;
-    node->nodeType = nodeType;
-    double* ptr    = NULL;
-    //LOG_DEBUG_VARS(data.data, data.doubleData);
-    switch (nodeType) {
-        case SYNTAX_TREE_IDENTIFICATOR_NODE:
-            node->data = data.data;
-            break;
-        case SYNTAX_TREE_CONST_NODE:
-            node->doubleData = data.doubleData;
-            break;
-        case SYNTAX_TREE_OPERATION_NODE:
-            node->data = data.data;
-            break;
-        default:
-            return SYNTAX_TREE_INVALID_NODE_TYPE;
-    }
+    node->left  = node->right = node->parent = 0;
+    node->lexem = *lexem;
 
     return SYNTAX_TREE_STATUS_OK;
 }
 
-SyntaxTreeErrors constructNodeWithKids(SyntaxTree* tree, size_t* newNodeInd, TreeNodeType nodeType, const NodeDataUnion data,
+SyntaxTreeErrors constructNodeWithKids(SyntaxTree* tree, size_t* newNodeInd, const Lexem* lexem, const NodeDataUnion data,
                                       size_t leftSon,  size_t rightSon) {
     IF_ARG_NULL_RETURN(newNodeInd);
     IF_ARG_NULL_RETURN(tree);
@@ -70,13 +58,13 @@ SyntaxTreeErrors constructNodeWithKids(SyntaxTree* tree, size_t* newNodeInd, Tre
     IF_ERR_RETURN(getNewNode(tree, newNodeInd));
     Node* node = getSyntaxTreeNodePtr(tree, *newNodeInd);
 
-    IF_ERR_RETURN(constructNode(tree, node, nodeType, data));
+    IF_ERR_RETURN(constructNode(tree, node, lexem, data));
     node->left  = leftSon;
     node->right = rightSon;
     return SYNTAX_TREE_STATUS_OK;
 }
 
-size_t constructNodeWithKidsNoErrors(SyntaxTree* tree, TreeNodeType nodeType, const NodeDataUnion data,
+size_t constructNodeWithKidsNoErrors(SyntaxTree* tree, const Lexem* lexem, const NodeDataUnion data,
                                      size_t leftSon,  size_t rightSon) {
     size_t newNodeInd = 0;
     SyntaxTreeErrors error = SYNTAX_TREE_STATUS_OK;
@@ -84,7 +72,7 @@ size_t constructNodeWithKidsNoErrors(SyntaxTree* tree, TreeNodeType nodeType, co
     assert(error == SYNTAX_TREE_STATUS_OK);
     Node* node = getSyntaxTreeNodePtr(tree, newNodeInd);
 
-    error = constructNode(tree, node, nodeType, data);
+    error = constructNode(tree, node, lexem, data);
     assert(error == SYNTAX_TREE_STATUS_OK);
 
     node->left  = leftSon;
@@ -128,7 +116,11 @@ static SyntaxTreeErrors resizeMemBuffer(SyntaxTree* tree, size_t newSize) {
     for (size_t nodeInd = oldSize; nodeInd < newSize; ++nodeInd) {
         Node* node = &tree->memBuff[nodeInd];
         node->memBuffIndex = nodeInd;
-        node->nodeType = SYNTAX_TREE_INVALID_NODE;
+        node->lexem = {
+            .type = INVALID_LEXEM_TYPE,
+            .strRepr = NULL,
+            .lexemSpecificName = INVALID_LEXEM,
+        };
     }
     //LOG_WARNING("@@@@@@@@@@@@@@@@@@@@@@");
 
@@ -159,8 +151,8 @@ SyntaxTreeErrors linkNewNodeToParent(SyntaxTree* tree, size_t parentInd, bool is
             parent->right = *newNodeInd;
     }
 
-    ARIFM_OPS_ERR_CHECK(initSyntaxTreeNodeWithString(node, substr));
-    LOG_DEBUG_VARS((node)->data, (node)->nodeType);
+    LEXEMS_REALIZATIONS_ERR_CHECK(initLexemWithString(substr, &node->lexem));
+    //LOG_DEBUG_VARS((node)->data);
 
     return SYNTAX_TREE_STATUS_OK;
 }
@@ -205,9 +197,7 @@ size_t getCopyOfSubtree(const SyntaxTree* tree, SyntaxTree* destTree,
     Node   old = *getSyntaxTreeNodePtr(tree, srcNodeInd);
     //LOG_DEBUG_VARS(old.data, old.nodeType, old.memBuffIndex);
 
-    node->nodeType   = old.nodeType;
-    node->data       = old.data;
-    node->doubleData = old.doubleData;
+    node->lexem = old.lexem;
 
     // FIXME: кажется копипаст, переписать. Выполнять для себя, вызывать для детей
     LOG_DEBUG_VARS(dest, destTree->memBuffSize);

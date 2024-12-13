@@ -1,28 +1,28 @@
 #include "../include/commonFileStart.hpp"
 
-static ArifmTreeErrors checkIfValidParent(const ArifmTree* tree, size_t nodeInd) {
+static SyntaxTreeErrors checkIfValidParent(const SyntaxTree* tree, size_t nodeInd) {
     IF_ARG_NULL_RETURN(tree);
 
-    size_t parentInd = getArifmTreeNodePtr(tree, nodeInd)->parent;
+    size_t parentInd = getSyntaxTreeNodePtr(tree, nodeInd)->parent;
     IF_NOT_COND_RETURN(parentInd <= tree->freeNodeIndex,
-                       ARIFM_TREE_BAD_PARENT_NODE);
+                       SYNTAX_TREE_BAD_PARENT_NODE);
     //LOG_DEBUG_VARS(parentInd, tree->root, nodeInd);
     if (tree->root == nodeInd) {
-        IF_NOT_COND_RETURN(parentInd == 0, ARIFM_TREE_BAD_PARENT_NODE);
-        return ARIFM_TREE_STATUS_OK;
+        IF_NOT_COND_RETURN(parentInd == 0, SYNTAX_TREE_BAD_PARENT_NODE);
+        return SYNTAX_TREE_STATUS_OK;
     }
 
-    Node parent = *getArifmTreeNodePtr(tree, parentInd);
+    Node parent = *getSyntaxTreeNodePtr(tree, parentInd);
     IF_NOT_COND_RETURN(parentInd != 0,
-                       ARIFM_TREE_BAD_PARENT_NODE);
+                       SYNTAX_TREE_BAD_PARENT_NODE);
     //LOG_DEBUG_VARS(parent.left, parent.right);
     IF_NOT_COND_RETURN((parent.left == nodeInd) ^ (parent.right == nodeInd),
-                       ARIFM_TREE_BAD_PARENT_NODE);
+                       SYNTAX_TREE_BAD_PARENT_NODE);
 
-    return ARIFM_TREE_STATUS_OK;
+    return SYNTAX_TREE_STATUS_OK;
 }
 
-static ArifmTreeErrors checkIfFuncNodeValid(const ArifmTree* tree, const Node* node) {
+static SyntaxTreeErrors checkIfFuncNodeValid(const SyntaxTree* tree, const Node* node) {
     IF_ARG_NULL_RETURN(tree);
     IF_ARG_NULL_RETURN(node);
 
@@ -37,18 +37,18 @@ static ArifmTreeErrors checkIfFuncNodeValid(const ArifmTree* tree, const Node* n
                            ARIFM_TREE_UNARY_FUNC_NODE_BAD_ARGS);
     }
 
-    return ARIFM_TREE_STATUS_OK;
+    return SYNTAX_TREE_STATUS_OK;
 }
 
 // validates arifmetic tree, works not so fast
-ArifmTreeErrors validateArifmTree(const ArifmTree* tree) {
+SyntaxTreeErrors validateSyntaxTree(const SyntaxTree* tree) {
     IF_ARG_NULL_RETURN(tree);
 
     if (tree->root == 0) // ASK: should this be error?
-        return ARIFM_TREE_STATUS_OK;
+        return SYNTAX_TREE_STATUS_OK;
 
     for (size_t nodeInd = 1; nodeInd <= tree->freeNodeIndex; ++nodeInd) {
-        Node node = *getArifmTreeNodePtr(tree, nodeInd);
+        Node node = *getSyntaxTreeNodePtr(tree, nodeInd);
         LOG_DEBUG_VARS(nodeInd);
 
         IF_ERR_RETURN(checkIfValidParent(tree, nodeInd));
@@ -70,5 +70,5 @@ ArifmTreeErrors validateArifmTree(const ArifmTree* tree) {
         }
     }
 
-    return ARIFM_TREE_STATUS_OK;
+    return SYNTAX_TREE_STATUS_OK;
 }

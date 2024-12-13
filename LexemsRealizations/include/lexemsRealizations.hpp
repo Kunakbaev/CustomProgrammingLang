@@ -1,8 +1,8 @@
-#ifndef ARIFM_OPERATIONS_INCLUDE_ARIFM_OPERATIONS_HPP
-#define ARIFM_OPERATIONS_INCLUDE_ARIFM_OPERATIONS_HPP
+#ifndef LEXEMS_REALIZATIONS_INCLUDE_LEXEMS_REALIZATIONS_HPP
+#define LEXEMS_REALIZATIONS_INCLUDE_LEXEMS_REALIZATIONS_HPP
 
 #include "errorsHandler.hpp"
-#include "../../Dumper/include/dumperStruct.hpp"
+//#include "../../Dumper/include/dumperStruct.hpp"
 //#include "../../SyntaxTree/include/syntaxTree.hpp"
 
 /*
@@ -20,19 +20,22 @@ enum LexemType {
     OPERATOR_LEXEM_TYPE      = 5,
 };
 
-#define GENERAL_LEXEM_DEF(enumName, ...) \
+#define GENERAL_LEXEM_DEF(_, enumName, ...) \
     enumName,
 
 enum Lexems {
+    INVALID_LEXEM,
     #include "codeGen/allLexems.hpp"
 };
+
+#undef GENERAL_LEXEM_DEF
 
 struct Lexem {
     LexemType   type;
     const char* strRepr; // str repr can be get from data (var index, or operator index or keyword index), so we would just have table with names and addition getter funcs
     // general lexem identificator or number (const)
     union {
-        size_t   data;
+        Lexems   lexemSpecificName;
         double   doubleData;
     };
 };
@@ -43,8 +46,10 @@ struct Lexem2stringSettings {
     bool isBracketsNeeded;
 };
 
+const char* getLexemTypeString(LexemType type);
 LexemsRealizationsErrors initLexemWithString(const char* line, Lexem* lexem);
 LexemsRealizationsErrors isCharLexemDelim(const char ch, bool* isDelim);
+LexemsRealizationsErrors getLexemDebugString(const Lexem* lexem, char** result);
 LexemsRealizationsErrors saveLexemToFile(FILE* file, const Lexem* lexem);
 
 #endif
