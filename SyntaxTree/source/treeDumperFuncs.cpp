@@ -61,9 +61,9 @@ SyntaxTreeErrors dumpSyntaxTree(SyntaxTree* tree) {
     IF_ARG_NULL_RETURN(tree);
 
     LOG_DEBUG("--------------------------------------\n");
-    LOG_DEBUG("arifmetic tree:\n");
+    LOG_DEBUG("syntax tree:\n");
     DEBUG_MESSAGE_TO_DUMPER_ALL_LOGS_FILE(tree->dumper, "--------------------------------------\n");
-    DEBUG_MESSAGE_TO_DUMPER_ALL_LOGS_FILE(tree->dumper, "arifmetic tree:\n");
+    DEBUG_MESSAGE_TO_DUMPER_ALL_LOGS_FILE(tree->dumper, "syntax tree:\n");
 
     Lexem2stringSettings lexemDumpSettings = {
         .isLexemTypeNeeded = false,

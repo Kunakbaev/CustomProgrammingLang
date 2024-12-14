@@ -293,6 +293,7 @@ LexemAnalysatorErrors saveArrayOfLexems2File(LexemAnalysator* analysator) {
         double doubleData = lexem.doubleData;
 
         saveLexemToFile(file, &lexem);
+        fprintf(file, "\n");
     }
 
     fclose(file);

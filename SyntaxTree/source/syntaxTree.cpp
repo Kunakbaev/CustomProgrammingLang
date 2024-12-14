@@ -80,6 +80,15 @@ size_t constructNodeWithKidsNoErrors(SyntaxTree* tree, const Lexem* lexem,
     return newNodeInd;
 }
 
+static void freeSyntaxTreeNode(Node* node) {
+    assert(node != NULL);
+
+    if (node->lexem.type == IDENTIFICATOR_LEXEM_TYPE ||
+        node->lexem.type == CONST_LEXEM_TYPE) {
+        FREE(node->lexem.strRepr);
+    }
+}
+
 static SyntaxTreeErrors resizeMemBuffer(SyntaxTree* tree, size_t newSize) {
     IF_ARG_NULL_RETURN(tree);
 
@@ -99,6 +108,7 @@ static SyntaxTreeErrors resizeMemBuffer(SyntaxTree* tree, size_t newSize) {
         memset(tree->memBuff + newSize, 0, deltaBytes);
     }
 
+    // ASK: should node be appropriatly freed?
     Node* tmp = (Node*)realloc(tree->memBuff, newSize * sizeof(Node));
     IF_NOT_COND_RETURN(tmp != NULL, SYNTAX_TREE_MEMORY_ALLOCATION_ERROR);
     tree->memBuff     = tmp;
@@ -213,9 +223,19 @@ SyntaxTreeErrors getCopyOfTree(const SyntaxTree* source, SyntaxTree* dest) {
 #include "treeSimplification.cpp"
 #include "treeDumperFuncs.cpp"
 #include "treeValidationFuncs.cpp"
+#include "saveSyntaxTree2File.cpp"
+#include "readSyntaxTreeFromFile.cpp"
 
 SyntaxTreeErrors destructSyntaxTree(SyntaxTree* tree) {
     IF_ARG_NULL_RETURN(tree);
+
+    for (size_t i = 1; i < tree->memBuffSize; ++i) {
+        Node* node = &tree->memBuff[i];
+        if (node->lexem.type == IDENTIFICATOR_LEXEM_TYPE ||
+            node->lexem.type == CONST_LEXEM_TYPE) {
+            FREE(node->lexem.strRepr);
+        }
+    }
 
     LOG_DEBUG_VARS(&tree->dumper);
     FREE(tree->memBuff);

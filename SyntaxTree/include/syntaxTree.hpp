@@ -22,6 +22,9 @@ size_t getCopyOfSubtree(const SyntaxTree* tree, SyntaxTree* destTree,
 Node* getSyntaxTreeNodePtr(const SyntaxTree* tree, size_t nodeInd);
 size_t constructNodeWithKidsNoErrors(SyntaxTree* tree, const Lexem* lexem,
                                      size_t leftSon,  size_t rightSon);
+SyntaxTreeErrors saveSyntaxTree2File(const SyntaxTree* tree,
+                                     const char* fileName);
+SyntaxTreeErrors readSyntaxTreeFromFile(SyntaxTree* tree, const char* sourceFilePath);
 SyntaxTreeErrors validateSyntaxTree(const SyntaxTree* tree);
 SyntaxTreeErrors dumpSyntaxTreeInConsole(const SyntaxTree* tree);
 SyntaxTreeErrors dumpSyntaxTree(SyntaxTree* tree);

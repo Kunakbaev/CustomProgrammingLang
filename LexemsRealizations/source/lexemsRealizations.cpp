@@ -108,14 +108,15 @@ const char* getLexemTypeString(LexemType type) {
     }
 }
 
-LexemsRealizationsErrors initLexemFromFileFormat(LexemType type, const char* line, Lexem* lexem) {
+static LexemsRealizationsErrors initLexemFromFileFormat(LexemType type, const char* line, Lexem* lexem) {
     IF_ARG_NULL_RETURN(line);
     IF_ARG_NULL_RETURN(lexem);
 
-    lexem->type = type;
-    char* endPtr = NULL;
+    lexem->type   = type;
+    char* endPtr  = NULL;
     char* strRepr = NULL;
     errno = 0;
+    LOG_DEBUG_VARS(type, line);
     switch (type) {
         case CONST_LEXEM_TYPE:
             lexem->doubleData = strtod(line, &endPtr);
@@ -133,9 +134,6 @@ LexemsRealizationsErrors initLexemFromFileFormat(LexemType type, const char* lin
         case OPERATOR_LEXEM_TYPE:
             lexem->lexemSpecificName = (Lexems)strtol(line, &endPtr, 10);
             lexem->strRepr = allLexemsArr[lexem->lexemSpecificName].strRepr;
-            // for (int i = 0; i < LEXEM_ARR_SIZE; ++i)
-            //     LOG_DEBUG_VARS(i, allLexemsArr[i].strRepr, allLexemsArr[i].lexemSpecificName);
-            // LOG_DEBUG_VARS(lexem->lexemSpecificName, lexem->strRepr);
             assert(errno == 0);
             break;
 
@@ -144,6 +142,33 @@ LexemsRealizationsErrors initLexemFromFileFormat(LexemType type, const char* lin
             assert(false); // add error
             break;
     }
+
+    return LEXEMS_REALIZATIONS_STATUS_OK;
+}
+
+// reads 2 lines from file and initializes given lexem
+LexemsRealizationsErrors readLexemFromFile(FILE* file, Lexem* lexem,
+                                           char* lineBuffer, const size_t maxLineLen) {
+    IF_ARG_NULL_RETURN(file);
+    IF_ARG_NULL_RETURN(lexem);
+    IF_ARG_NULL_RETURN(lineBuffer);
+
+    fgets(lineBuffer, maxLineLen, file);
+    assert(lineBuffer != NULL);
+
+    char* endPtr = 0;
+    errno = 0;
+    LexemType lexemType = (LexemType)strtol(lineBuffer, &endPtr, 10); // ASK: bad cast?
+    LOG_DEBUG_VARS(lineBuffer, lexemType);
+    assert(errno == 0);
+    //LOG_DEBUG_VARS(lineBuffer, lexemType);
+
+    fgets(lineBuffer, maxLineLen, file);
+    assert(lineBuffer != NULL);
+
+    //LOG_DEBUG_VARS(lineBuffer);
+    initLexemFromFileFormat(lexemType, lineBuffer, lexem);
+    LOG_DEBUG_VARS(lexem->lexemSpecificName, lexem->doubleData);
 
     return LEXEMS_REALIZATIONS_STATUS_OK;
 }
@@ -170,7 +195,7 @@ LexemsRealizationsErrors saveLexemToFile(FILE* file, const Lexem* lexem) {
             assert(false);
             break;
     }
-    fprintf(file, "\n\n");
+    fprintf(file, "\n");
 
     return LEXEMS_REALIZATIONS_STATUS_OK;
 }

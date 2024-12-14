@@ -6,13 +6,11 @@ LOGGER_FLAGS :=
 CFLAGS += -fsanitize=address
 
 MY_LOG_LIB_NAME    			:= my_loglib
-SOURCE_DIR		   			:= common/source
-SYNTAX_TREE_PATH			:= SyntaxTree/source
-LEXEM_ANALYSATOR_PATH		:= LexemAnalysator/source
-SYNTAX_ANALYSATOR_PATH		:= SyntaxAnalysator/source
-CODE_GENERATOR_PATH			:= CodeGenerator/source
-DUMPER_MODULE_PATH 			:= Dumper/source
-LIB_RUN_NAME       			:= customProgrammingLang
+SOURCE_DIR		   			:= source
+LEXEM_REALIZATIONS_PATH		:= ../LexemsRealizations/source
+SYNTAX_TREE_PATH			:= ../SyntaxTree/source
+DUMPER_MODULE_PATH 			:= ../Dumper/source
+MODULE_NAME       			:= CodeGenerator
 BUILD_DIR          			:= building
 LOGGER_EXT_LIB_DIR 			:= external/LoggerLib
 
@@ -20,54 +18,48 @@ ifeq ($(DEBUG), 0)
 	ASSERT_DEFINE = -DNDEBUG
 endif
 
-.PHONY: $(LIB_RUN_NAME) run $(BUILD_DIR) clean
-
-
-
-# GET RID OF SANITIZER DEADLY SIGNAL:		sudo sysctl vm.mmap_rnd_bits=28
-
-
-
-
+.PHONY: $(MODULE_NAME) run $(BUILD_DIR) clean
 
 # -------------------------   LIB RUN   -----------------------------
 
 # SRC 	   		   := $(SOURCE_DIR)/decisionTreeErrors.cpp $(SOURCE_DIR)/decisionTreeLib.cpp $(SOURCE_DIR)/dumper.cpp $(SOURCE_DIR)/main.cpp
-SRC 	   		   := 						\
+SRC := 						\
+	$(LEXEM_REALIZATIONS_PATH)/lexemsRealizations.cpp\
+	$(LEXEM_REALIZATIONS_PATH)/errorsHandler.cpp\
 	$(SYNTAX_TREE_PATH)/syntaxTree.cpp\
-	$(DUMPER_MODULE_PATH)/dumper.cpp		\
+	$(SYNTAX_TREE_PATH)/syntaxTreeErrorsHandler.cpp\
+	$(DUMPER_MODULE_PATH)/dumper.cpp\
 	$(SOURCE_DIR)/main.cpp					\
+	$(SOURCE_DIR)/codeGenerator.cpp					\
+	$(SOURCE_DIR)/codeGeneratorErrorsHandler.cpp					\
 
-OBJ 	   		   := $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(notdir ${SRC}))
+OBJ := $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(notdir ${SRC}))
 
 CFLAGS += -I $(LOGGER_EXT_LIB_DIR)/include
 
-$(LIB_RUN_NAME): $(OBJ)
-	@$(CC) $^ -o $(BUILD_DIR)/$(LIB_RUN_NAME) -l$(MY_LOG_LIB_NAME) $(CFLAGS)
+$(MODULE_NAME): $(OBJ)
+	$(CC) $^ -o $(BUILD_DIR)/$(MODULE_NAME) -l$(MY_LOG_LIB_NAME) $(CFLAGS)
 
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp | $(BUILD_DIR)
-	@$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
+	$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
 
-$(BUILD_DIR)/%.o: $(ARIFM_TREE_PATH)/%.cpp | $(BUILD_DIR)
-	@$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
+$(BUILD_DIR)/%.o: $(LEXEM_REALIZATIONS_PATH)/%.cpp | $(BUILD_DIR)
+	$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
 
-$(BUILD_DIR)/%.o: $(READER_PATH)/%.cpp | $(BUILD_DIR)
-	@$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
-
-$(BUILD_DIR)/%.o: $(ARIFM_TREE_OPERATIONS_PATH)/%.cpp | $(BUILD_DIR)
-	@$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
+$(BUILD_DIR)/%.o: $(SYNTAX_TREE_PATH)/%.cpp | $(BUILD_DIR)
+	$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
 
 $(BUILD_DIR)/%.o: $(DUMPER_MODULE_PATH)/%.cpp | $(BUILD_DIR)
-	@$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
+	$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
 
 # WARNING: always cleans building directory
 
-run: clean $(LIB_RUN_NAME)
-	@./building/$(LIB_RUN_NAME)
+run: clean $(MODULE_NAME)
+	./building/$(MODULE_NAME)
 
 # -------------------------   HELPER TARGETS   ---------------------------
 
 $(BUILD_DIR):
-	@mkdir -p $(BUILD_DIR)
+	mkdir -p $(BUILD_DIR)
 clean:
-	@rm -f $(BUILD_DIR)/*.o $(BUILD_DIR)/$(LIB_RUN_NAME)
+	rm -f $(BUILD_DIR)/*.o $(BUILD_DIR)/$(MODULE_NAME)

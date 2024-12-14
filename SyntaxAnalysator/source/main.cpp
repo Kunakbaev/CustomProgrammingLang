@@ -20,6 +20,8 @@ int main() {
     dumpSyntaxTreeInConsole(&analysator.tree);
     openImageOfCurrentStateSyntaxTree(&analysator.tree);
 
+    saveAnalysatorSyntaxTree2File(&analysator);
+
     destructSyntaxAnalysator(&analysator);
     dumperDestructor(&dumper);
 

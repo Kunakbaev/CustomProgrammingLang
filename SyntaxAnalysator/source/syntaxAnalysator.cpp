@@ -4,7 +4,7 @@
 
 
 const size_t MAX_NUM_OF_LINES_IN_INPUT = 1 << 10;
-
+const size_t MAX_LINE_LEN              = 1 << 6;
 
 
 SyntaxAnalysatorErrors constructSyntaxAnalysator(const char* sourceFilePath,
@@ -58,30 +58,10 @@ SyntaxAnalysatorErrors readArrOfLexemsFromFile(SyntaxAnalysator* analysator) {
     IF_NOT_COND_RETURN(analysator->arrOfLexems != NULL,
                        SYNTAX_ANALYSATOR_MEMORY_ALLOCATION_ERROR);
 
-    size_t elemInd = 0;
     char lineBuffer[MAX_NUM_OF_LINES_IN_INPUT] = {};
-    while (fgets(lineBuffer, MAX_NUM_OF_LINES_IN_INPUT, file)) {
-        char* endPtr = 0;
-        errno = 0;
-        LexemType lexemType = (LexemType)strtol(lineBuffer, &endPtr, 10); // ASK: bad cast?
-        assert(errno == 0);
-        //LOG_DEBUG_VARS(lineBuffer, lexemType);
-
-        assert(elemInd < analysator->lenOfArr);
+    for (size_t elemInd = 0; elemInd < analysator->lenOfArr; ++elemInd) {
         Lexem* lexem = &analysator->arrOfLexems[elemInd];
-
-        fgets(lineBuffer, MAX_NUM_OF_LINES_IN_INPUT, file);
-        assert(lineBuffer != NULL);
-
-        //LOG_DEBUG_VARS(lineBuffer);
-        initLexemFromFileFormat(lexemType, lineBuffer, lexem);
-        //char* lexemDbgStr = NULL;
-        //getLexemDebugString(lexem, &lexemDbgStr);
-        //const char* type = getLexemTypeString(lexem->type);
-        //LOG_DEBUG_VARS(type, lexemDbgStr, lexem->doubleData);
-        //FREE(lexemDbgStr);
-        ++elemInd;
-
+        LEXEMS_REALIZATIONS_ERR_CHECK(readLexemFromFile(file, lexem, lineBuffer, MAX_LINE_LEN));
         fgets(lineBuffer, MAX_NUM_OF_LINES_IN_INPUT, file); // reads empty line that separates 2 different lexems
     }
 
@@ -117,10 +97,10 @@ SyntaxAnalysatorErrors dumpSyntaxAnalysatorTreeInConsole(const SyntaxAnalysator*
 
 #include "generateSyntaxTree.cpp"
 
-SyntaxAnalysatorErrors saveSyntaxTree2File(SyntaxAnalysator* analysator) {
+SyntaxAnalysatorErrors saveAnalysatorSyntaxTree2File(SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
 
-
+    saveSyntaxTree2File(&analysator->tree, analysator->destFilePath);
 
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }

@@ -46,7 +46,8 @@ struct Lexem2stringSettings {
 };
 
 const char* getLexemTypeString(LexemType type);
-LexemsRealizationsErrors initLexemFromFileFormat(LexemType type, const char* line, Lexem* lexem);
+LexemsRealizationsErrors readLexemFromFile(FILE* file, Lexem* lexem,
+                                           char* lineBuffer, const size_t maxLineLen);
 LexemsRealizationsErrors initLexemWithString(const char* line, Lexem* lexem);
 LexemsRealizationsErrors isCharLexemDelim(const char ch, bool* isDelim);
 LexemsRealizationsErrors getLexemDebugString(const Lexem* lexem, char** result);

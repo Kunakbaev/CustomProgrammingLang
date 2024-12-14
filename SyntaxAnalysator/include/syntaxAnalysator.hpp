@@ -24,7 +24,7 @@ SyntaxAnalysatorErrors dumpSyntaxAnalysatorTreeInConsole(const SyntaxAnalysator*
 SyntaxAnalysatorErrors dumpSyntaxAnalysatorArrOfLexems(const SyntaxAnalysator* analysator);
 SyntaxAnalysatorErrors readArrOfLexemsFromFile(SyntaxAnalysator* analysator);
 SyntaxAnalysatorErrors generateSyntaxTree(SyntaxAnalysator* analysator);
-SyntaxAnalysatorErrors saveSyntaxTree2File(SyntaxAnalysator* analysator);
+SyntaxAnalysatorErrors saveAnalysatorSyntaxTree2File(SyntaxAnalysator* analysator);
 SyntaxAnalysatorErrors destructSyntaxAnalysator(SyntaxAnalysator* analysator);
 
 #endif
