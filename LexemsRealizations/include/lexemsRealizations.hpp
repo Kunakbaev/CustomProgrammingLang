@@ -32,7 +32,7 @@ enum Lexems {
 
 struct Lexem {
     LexemType   type;
-    const char* strRepr; // str repr can be get from data (var index, or operator index or keyword index), so we would just have table with names and addition getter funcs
+    char* strRepr; // str repr can be get from data (var index, or operator index or keyword index), so we would just have table with names and addition getter funcs
     // general lexem identificator or number (const)
     union {
         Lexems   lexemSpecificName;
@@ -42,14 +42,15 @@ struct Lexem {
 
 struct Lexem2stringSettings {
     bool isLexemTypeNeeded;
-    bool isFuncTypeNeeded;
     bool isBracketsNeeded;
 };
 
 const char* getLexemTypeString(LexemType type);
+LexemsRealizationsErrors initLexemFromFileFormat(LexemType type, const char* line, Lexem* lexem);
 LexemsRealizationsErrors initLexemWithString(const char* line, Lexem* lexem);
 LexemsRealizationsErrors isCharLexemDelim(const char ch, bool* isDelim);
 LexemsRealizationsErrors getLexemDebugString(const Lexem* lexem, char** result);
 LexemsRealizationsErrors saveLexemToFile(FILE* file, const Lexem* lexem);
+LexemsRealizationsErrors getLexemDataString(const Lexem* lexem, const Lexem2stringSettings* settings, char** line);
 
 #endif

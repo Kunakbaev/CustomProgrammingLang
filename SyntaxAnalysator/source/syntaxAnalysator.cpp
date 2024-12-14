@@ -1,23 +1,6 @@
 #include <errno.h>
 
-#include "../include/syntaxAnalysator.hpp"
-
-#define IF_ARG_NULL_RETURN(arg) \
-    COMMON_IF_ARG_NULL_RETURN(arg, SYNTAX_ANALYSATOR_INVALID_ARGUMENT, getSyntaxAnalysatorErrorMessage)
-
-#define IF_ERR_RETURN(error) \
-    COMMON_IF_ERR_RETURN(error, getSyntaxAnalysatorErrorMessage, SYNTAX_ANALYSATOR_STATUS_OK);\
-
-#define IF_NOT_COND_RETURN(condition, error) \
-    COMMON_IF_NOT_COND_RETURN(condition, error, getSyntaxAnalysatorErrorMessage)\
-
-#define DUMPER_ERR_CHECK(error) \
-    COMMON_IF_SUBMODULE_ERR_RETURN(error, getDumperErrorMessage, DUMPER_STATUS_OK, SYNTAX_ANALYSATOR_DUMPER_ERROR);
-
-#define LEXEMS_REALIZATIONS_ERR_CHECK(error) \
-    COMMON_IF_SUBMODULE_ERR_RETURN(error, getLexemsRealizationsErrorMessage, LEXEMS_REALIZATIONS_STATUS_OK, SYNTAX_ANALYSATOR_LEXEMS_REALIZATIONS_ERROR);
-
-
+#include "../include/commonFileStart.hpp"
 
 
 const size_t MAX_NUM_OF_LINES_IN_INPUT = 1 << 10;
@@ -26,7 +9,8 @@ const size_t MAX_NUM_OF_LINES_IN_INPUT = 1 << 10;
 
 SyntaxAnalysatorErrors constructSyntaxAnalysator(const char* sourceFilePath,
                                                  const char* destFilePath,
-                                                 SyntaxAnalysator* analysator) {
+                                                 SyntaxAnalysator* analysator,
+                                                 Dumper* dumper) {
     IF_ARG_NULL_RETURN(sourceFilePath);
     IF_ARG_NULL_RETURN(destFilePath);
     IF_ARG_NULL_RETURN(analysator);
@@ -37,7 +21,10 @@ SyntaxAnalysatorErrors constructSyntaxAnalysator(const char* sourceFilePath,
         .arrOfLexems    = NULL,
         .lenOfArr       = 0,
         .tree           = {},
+        .dumper         = dumper
     };
+
+    constructSyntaxTree(&analysator->tree, analysator->dumper);
 
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }
@@ -62,10 +49,11 @@ SyntaxAnalysatorErrors readArrOfLexemsFromFile(SyntaxAnalysator* analysator) {
     IF_NOT_COND_RETURN(file != NULL, SYNTAX_ANALYSATOR_FILE_OPENING_ERROR);
 
     size_t numOfLines = getNumOfLines(file);
-    assert(numOfLines % 2 == 0);
+    LOG_DEBUG_VARS(numOfLines);
+    assert(numOfLines % 3 == 0);
     assert(numOfLines > 0);
 
-    analysator->lenOfArr = numOfLines / 1;
+    analysator->lenOfArr = numOfLines / 3;
     analysator->arrOfLexems = (Lexem*)calloc(analysator->lenOfArr, sizeof(Lexem));
     IF_NOT_COND_RETURN(analysator->arrOfLexems != NULL,
                        SYNTAX_ANALYSATOR_MEMORY_ALLOCATION_ERROR);
@@ -77,22 +65,57 @@ SyntaxAnalysatorErrors readArrOfLexemsFromFile(SyntaxAnalysator* analysator) {
         errno = 0;
         LexemType lexemType = (LexemType)strtol(lineBuffer, &endPtr, 10); // ASK: bad cast?
         assert(errno == 0);
+        //LOG_DEBUG_VARS(lineBuffer, lexemType);
 
         assert(elemInd < analysator->lenOfArr);
-        analysator->arrOfLexems[elemInd] =
+        Lexem* lexem = &analysator->arrOfLexems[elemInd];
+
+        fgets(lineBuffer, MAX_NUM_OF_LINES_IN_INPUT, file);
+        assert(lineBuffer != NULL);
+
+        //LOG_DEBUG_VARS(lineBuffer);
+        initLexemFromFileFormat(lexemType, lineBuffer, lexem);
+        //char* lexemDbgStr = NULL;
+        //getLexemDebugString(lexem, &lexemDbgStr);
+        //const char* type = getLexemTypeString(lexem->type);
+        //LOG_DEBUG_VARS(type, lexemDbgStr, lexem->doubleData);
+        //FREE(lexemDbgStr);
         ++elemInd;
+
+        fgets(lineBuffer, MAX_NUM_OF_LINES_IN_INPUT, file); // reads empty line that separates 2 different lexems
     }
 
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }
 
-SyntaxAnalysatorErrors generateSyntaxTree(SyntaxAnalysator* analysator) {
+SyntaxAnalysatorErrors dumpSyntaxAnalysatorArrOfLexems(const SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
 
+    LOG_DEBUG_VARS("---------------------");
+    LOG_DEBUG_VARS("syntax analysator array of lexems:");
+    for (size_t arrInd = 0; arrInd < analysator->lenOfArr; ++arrInd) {
+        Lexem lexem = analysator->arrOfLexems[arrInd];
 
+        char* lexemDbgStr = NULL;
+        getLexemDebugString(&lexem, &lexemDbgStr);
+        const char* type = getLexemTypeString(lexem.type);
+        LOG_DEBUG_VARS(lexem.type, lexem.lexemSpecificName, type, lexemDbgStr, lexem.doubleData);
+        FREE(lexemDbgStr);
+    }
+    LOG_DEBUG_VARS("---------------------");
 
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }
+
+SyntaxAnalysatorErrors dumpSyntaxAnalysatorTreeInConsole(const SyntaxAnalysator* analysator) {
+    IF_ARG_NULL_RETURN(analysator);
+
+    dumpSyntaxTreeInConsole(&analysator->tree);
+
+    return SYNTAX_ANALYSATOR_STATUS_OK;
+}
+
+#include "generateSyntaxTree.cpp"
 
 SyntaxAnalysatorErrors saveSyntaxTree2File(SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
@@ -104,6 +127,14 @@ SyntaxAnalysatorErrors saveSyntaxTree2File(SyntaxAnalysator* analysator) {
 
 SyntaxAnalysatorErrors destructSyntaxAnalysator(SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
+
+    for (size_t arrInd = 0; arrInd < analysator->lenOfArr; ++arrInd) {
+        Lexem lexem = analysator->arrOfLexems[arrInd];
+        if (lexem.type == IDENTIFICATOR_LEXEM_TYPE ||
+            lexem.type == CONST_LEXEM_TYPE) {
+            FREE(lexem.strRepr);
+        }
+    }
 
     destructSyntaxTree(&analysator->tree);
     FREE(analysator->arrOfLexems);

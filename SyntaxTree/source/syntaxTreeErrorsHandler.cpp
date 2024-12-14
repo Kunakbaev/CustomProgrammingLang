@@ -1,8 +1,8 @@
-#include "../include/errorsHandler.hpp"
+#include "../include/syntaxTreeErrorsHandler.hpp"
 
 const char* getSyntaxTreeErrorMessage(SyntaxTreeErrors error) {
     #define ERROR_UNPACK(errName, errCode, errMessage)          \
-        case ARIFM_TREE_##errName:                                           \
+        case SYNTAX_TREE_##errName:                                           \
             return "Syntax tree error: " errMessage ".\n";    \
 
     switch (error) {

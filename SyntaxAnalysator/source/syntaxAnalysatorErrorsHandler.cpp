@@ -2,7 +2,7 @@
 
 const char* getSyntaxAnalysatorErrorMessage(SyntaxAnalysatorErrors error) {
     #define ERROR_UNPACK(errName, errCode, errMessage)          \
-        case ARIFM_TREE_##errName:                                           \
+        case SYNTAX_ANALYSATOR_##errName:                                           \
             return "Syntax analysator error: " errMessage ".\n";    \
 
     switch (error) {

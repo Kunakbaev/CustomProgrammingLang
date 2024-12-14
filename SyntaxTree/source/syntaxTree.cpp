@@ -39,7 +39,7 @@ SyntaxTreeErrors constructSyntaxTree(SyntaxTree* tree, Dumper* dumper) {
     return SYNTAX_TREE_STATUS_OK;
 }
 
-static SyntaxTreeErrors constructNode(SyntaxTree* tree, Node* node, const Lexem* lexem, const NodeDataUnion data) {
+static SyntaxTreeErrors constructNode(SyntaxTree* tree, Node* node, const Lexem* lexem) {
     IF_ARG_NULL_RETURN(tree);
     IF_ARG_NULL_RETURN(node);
     IF_ARG_NULL_RETURN(lexem);
@@ -50,7 +50,7 @@ static SyntaxTreeErrors constructNode(SyntaxTree* tree, Node* node, const Lexem*
     return SYNTAX_TREE_STATUS_OK;
 }
 
-SyntaxTreeErrors constructNodeWithKids(SyntaxTree* tree, size_t* newNodeInd, const Lexem* lexem, const NodeDataUnion data,
+SyntaxTreeErrors constructNodeWithKids(SyntaxTree* tree, size_t* newNodeInd, const Lexem* lexem,
                                       size_t leftSon,  size_t rightSon) {
     IF_ARG_NULL_RETURN(newNodeInd);
     IF_ARG_NULL_RETURN(tree);
@@ -58,21 +58,21 @@ SyntaxTreeErrors constructNodeWithKids(SyntaxTree* tree, size_t* newNodeInd, con
     IF_ERR_RETURN(getNewNode(tree, newNodeInd));
     Node* node = getSyntaxTreeNodePtr(tree, *newNodeInd);
 
-    IF_ERR_RETURN(constructNode(tree, node, lexem, data));
+    IF_ERR_RETURN(constructNode(tree, node, lexem));
     node->left  = leftSon;
     node->right = rightSon;
     return SYNTAX_TREE_STATUS_OK;
 }
 
-size_t constructNodeWithKidsNoErrors(SyntaxTree* tree, const Lexem* lexem, const NodeDataUnion data,
-                                     size_t leftSon,  size_t rightSon) {
+size_t constructNodeWithKidsNoErrors(SyntaxTree* tree, const Lexem* lexem,
+                                     size_t leftSon, size_t rightSon) {
     size_t newNodeInd = 0;
     SyntaxTreeErrors error = SYNTAX_TREE_STATUS_OK;
     error = getNewNode(tree, &newNodeInd);
     assert(error == SYNTAX_TREE_STATUS_OK);
     Node* node = getSyntaxTreeNodePtr(tree, newNodeInd);
 
-    error = constructNode(tree, node, lexem, data);
+    error = constructNode(tree, node, lexem);
     assert(error == SYNTAX_TREE_STATUS_OK);
 
     node->left  = leftSon;
@@ -99,14 +99,10 @@ static SyntaxTreeErrors resizeMemBuffer(SyntaxTree* tree, size_t newSize) {
         memset(tree->memBuff + newSize, 0, deltaBytes);
     }
 
-    //LOG_DEBUG_VARS(oldSize, deltaSize, deltaBytes);
     Node* tmp = (Node*)realloc(tree->memBuff, newSize * sizeof(Node));
     IF_NOT_COND_RETURN(tmp != NULL, SYNTAX_TREE_MEMORY_ALLOCATION_ERROR);
     tree->memBuff     = tmp;
     tree->memBuffSize = newSize;
-//     LOG_DEBUG_VARS(newSize);
-//
-//     LOG_DEBUG_VARS(tmp);
 
     if (oldSize < newSize) {
         memset(tree->memBuff + oldSize, 0, deltaBytes - 1);
@@ -122,10 +118,6 @@ static SyntaxTreeErrors resizeMemBuffer(SyntaxTree* tree, size_t newSize) {
             .lexemSpecificName = INVALID_LEXEM,
         };
     }
-    //LOG_WARNING("@@@@@@@@@@@@@@@@@@@@@@");
-
-    // for (size_t i = 0; i < newSize; ++i)
-    //     LOG_DEBUG_VARS(oldSize, newSize, tree->memBuff[i].data = 10);
 
     return SYNTAX_TREE_STATUS_OK;
 }
@@ -152,7 +144,6 @@ SyntaxTreeErrors linkNewNodeToParent(SyntaxTree* tree, size_t parentInd, bool is
     }
 
     LEXEMS_REALIZATIONS_ERR_CHECK(initLexemWithString(substr, &node->lexem));
-    //LOG_DEBUG_VARS((node)->data);
 
     return SYNTAX_TREE_STATUS_OK;
 }
@@ -162,9 +153,7 @@ SyntaxTreeErrors getNewNode(SyntaxTree* tree, size_t* newNodeIndex) {
     IF_ARG_NULL_RETURN(newNodeIndex);
 
     if (tree->freeNodeIndex + 1 >= tree->memBuffSize) {
-        //LOG_DEBUG_VARS(tree->freeNodeIndex + 1, tree->memBuffSize, "resize");
         IF_ERR_RETURN(resizeMemBuffer(tree, tree->memBuffSize * 2));
-        //LOG_DEBUG_VARS(tree->memBuffSize);
     }
     assert(tree->freeNodeIndex < tree->memBuffSize);
     *newNodeIndex = ++tree->freeNodeIndex;

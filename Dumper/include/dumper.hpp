@@ -29,7 +29,7 @@ struct DumperSettings {
     const NodesWithColor* coloringRule;
     size_t                coloringRuleLen;
     bool                  isMemIndexesInfoNeeded;
-    Lexem2stringSettings   node2stringSettings;
+    Lexem2stringSettings  lexem2stringSettings;
 };
 
 DumperErrors dumperConstructor(Dumper* dumper,
@@ -39,7 +39,7 @@ DumperErrors dumperConstructor(Dumper* dumper,
 void dumperAddDebugInfoToAllLogsFile(const Dumper* dumper, const char* debugInfo);
 void dumperAddImgToAllLogsFile(const Dumper* dumper, const char* imagePath);
 DumperErrors dumperDumpSingleTreeNode(Dumper* dumper, const Node* node, const DumperSettings* settings);
-DumperErrors dumperDumpArifmTree(Dumper* dumper, const SyntaxTree* tree, const DumperSettings* settings);
+DumperErrors dumperDumpSyntaxTree(Dumper* dumper, const SyntaxTree* tree, const DumperSettings* settings);
 char* getLastImageFileName(const Dumper* dumper);
 DumperErrors dumperDestructor(Dumper* dumper);
 

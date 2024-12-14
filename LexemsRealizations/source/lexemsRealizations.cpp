@@ -19,7 +19,8 @@ const int baseLineNum = __LINE__;
 #define GENERAL_LEXEM_DEF(lexemType, enumName, repr) \
     {.type=lexemType, .strRepr=repr, {.lexemSpecificName = enumName}},
 
-Lexem allLexemsArr[] = {
+const Lexem allLexemsArr[] = {
+    {.type=INVALID_LEXEM_TYPE, .strRepr = NULL, {.lexemSpecificName = INVALID_LEXEM}},
     #include "../include/codeGen/allLexems.hpp"
 };
 
@@ -45,7 +46,7 @@ LexemsRealizationsErrors initLexemWithString(const char* line, Lexem* lexem) {
     IF_ARG_NULL_RETURN(lexem);
 
     LOG_DEBUG_VARS(LEXEM_ARR_SIZE, line);
-    for (int i = 0; i < LEXEM_ARR_SIZE; ++i) {
+    for (int i = 1; i < LEXEM_ARR_SIZE; ++i) {
         bool isSame = strcmp(allLexemsArr[i].strRepr, line) == 0;
         //LOG_DEBUG_VARS(i, allLexemsArr[i].strRepr, line, isSame);
         if (isSame) {
@@ -68,7 +69,7 @@ LexemsRealizationsErrors initLexemWithString(const char* line, Lexem* lexem) {
     } else {
         // TODO: add identificator to table of names
         lexem->lexemSpecificName = INVALID_LEXEM;
-        lexem->strRepr = line; // ASK: is this good?
+        lexem->strRepr = (char*)line; // ASK: is this good?
         assert(false); // not implemented yet
         lexem->type = IDENTIFICATOR_LEXEM_TYPE;
     }
@@ -81,7 +82,8 @@ LexemsRealizationsErrors isCharLexemDelim(const char ch, bool* isDelim) {
 
     *isDelim = false;
     char line[] = { ch, '\0' };
-    for (int i = 0; i < LEXEM_ARR_SIZE; ++i) {
+    for (int i = 1; i < LEXEM_ARR_SIZE; ++i) {
+        LOG_DEBUG_VARS(i, allLexemsArr[i].strRepr);
         bool isSame = strcmp(allLexemsArr[i].strRepr, line) == 0;
         if (isSame && allLexemsArr[i].type == DELIM_LEXEM_TYPE) { // second operand is just to be sure, it should not necessary as we check strings for equality
             *isDelim = true;
@@ -112,28 +114,28 @@ LexemsRealizationsErrors initLexemFromFileFormat(LexemType type, const char* lin
 
     lexem->type = type;
     char* endPtr = NULL;
+    char* strRepr = NULL;
     errno = 0;
     switch (type) {
         case CONST_LEXEM_TYPE:
-            char* strRepr = (char*)calloc(strlen(line), sizeof(char));
+            lexem->doubleData = strtod(line, &endPtr);
+            assert(errno == 0);
+
+        case IDENTIFICATOR_LEXEM_TYPE:
+            strRepr = (char*)calloc(strlen(line) + 1, sizeof(char));
             IF_NOT_COND_RETURN(strRepr != NULL, LEXEMS_REALIZATIONS_MEMORY_ALLOCATION_ERROR);
             strcpy(strRepr, line);
             lexem->strRepr = strRepr;
-
-            lexem->doubleData = strtod(line, &endPtr);
-            assert(errno == 0);
-            break;
-
-        case IDENTIFICATOR_LEXEM_TYPE:
-
-
-
             break;
 
         case KEYWORD_LEXEM_TYPE:
         case DELIM_LEXEM_TYPE:
         case OPERATOR_LEXEM_TYPE:
             lexem->lexemSpecificName = (Lexems)strtol(line, &endPtr, 10);
+            lexem->strRepr = allLexemsArr[lexem->lexemSpecificName].strRepr;
+            // for (int i = 0; i < LEXEM_ARR_SIZE; ++i)
+            //     LOG_DEBUG_VARS(i, allLexemsArr[i].strRepr, allLexemsArr[i].lexemSpecificName);
+            // LOG_DEBUG_VARS(lexem->lexemSpecificName, lexem->strRepr);
             assert(errno == 0);
             break;
 
@@ -153,7 +155,7 @@ LexemsRealizationsErrors saveLexemToFile(FILE* file, const Lexem* lexem) {
     fprintf(file, "%d\n", lexem->type);
     switch (lexem->type) {
         case CONST_LEXEM_TYPE:
-            fprintf(file, "%f", lexem->doubleData);
+            fprintf(file, "%.10f", lexem->doubleData);
             break;
         case IDENTIFICATOR_LEXEM_TYPE:
             fprintf(file, "%s", lexem->strRepr);
@@ -188,7 +190,7 @@ LexemsRealizationsErrors getLexemDebugString(const Lexem* lexem, char** result) 
             strcpy(*result, lexem->strRepr);
             break;
         case CONST_LEXEM_TYPE:
-            snprintf(*result, DBG_STRING_LEN, "%f", lexem->doubleData);
+            snprintf(*result, DBG_STRING_LEN, "%.2f", lexem->doubleData);
             break;
         case IDENTIFICATOR_LEXEM_TYPE:
             strcpy(*result, lexem->strRepr);
@@ -196,6 +198,32 @@ LexemsRealizationsErrors getLexemDebugString(const Lexem* lexem, char** result) 
         default:
             assert(false); // TODO: unknown lexem type
     }
+
+    return LEXEMS_REALIZATIONS_STATUS_OK;
+}
+
+LexemsRealizationsErrors getLexemDataString(const Lexem* lexem, const Lexem2stringSettings* settings, char** line) {
+    IF_ARG_NULL_RETURN(lexem);
+    IF_ARG_NULL_RETURN(settings);
+    IF_ARG_NULL_RETURN(line);
+
+    const size_t MAX_LINE_LEN = 30;
+    *line = (char*)calloc(MAX_LINE_LEN, sizeof(char));
+    IF_NOT_COND_RETURN(*line != NULL, LEXEMS_REALIZATIONS_MEMORY_ALLOCATION_ERROR);
+
+    char* linePtr = *line;
+
+    #define ADD2BUFF(format, ...) \
+        linePtr += snprintf(linePtr, MAX_LINE_LEN - (linePtr - *line), format, __VA_ARGS__)
+
+    const char* type = getLexemTypeString(lexem->type);
+    if (settings->isBracketsNeeded)  ADD2BUFF("%s", "(");
+    if (settings->isLexemTypeNeeded) ADD2BUFF(" %s ", type);
+    char* debugStr = NULL;
+    IF_ERR_RETURN(getLexemDebugString(lexem, &debugStr));
+    ADD2BUFF(" %s ", debugStr);
+    FREE(debugStr);
+    if (settings->isBracketsNeeded)  ADD2BUFF("%s", ")");
 
     return LEXEMS_REALIZATIONS_STATUS_OK;
 }
