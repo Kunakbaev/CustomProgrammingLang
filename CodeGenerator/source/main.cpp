@@ -16,6 +16,8 @@ int main() {
     readCodeGeneratorSyntaxTreeFromFile(&generator);
     openImageOfCurrentStateSyntaxTree(&generator.tree);
 
+    generateAssemblerCodeFromSyntaxTree(&generator);
+
     destructCodeGenerator(&generator);
     dumperDestructor(&dumper);
 

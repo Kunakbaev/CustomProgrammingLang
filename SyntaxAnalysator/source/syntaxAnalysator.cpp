@@ -108,13 +108,13 @@ SyntaxAnalysatorErrors saveAnalysatorSyntaxTree2File(SyntaxAnalysator* analysato
 SyntaxAnalysatorErrors destructSyntaxAnalysator(SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
 
-    for (size_t arrInd = 0; arrInd < analysator->lenOfArr; ++arrInd) {
-        Lexem lexem = analysator->arrOfLexems[arrInd];
-        if (lexem.type == IDENTIFICATOR_LEXEM_TYPE ||
-            lexem.type == CONST_LEXEM_TYPE) {
-            FREE(lexem.strRepr);
-        }
-    }
+    // for (size_t arrInd = 0; arrInd < analysator->lenOfArr; ++arrInd) {
+    //     Lexem lexem = analysator->arrOfLexems[arrInd];
+    //     if (lexem.type == IDENTIFICATOR_LEXEM_TYPE ||
+    //         lexem.type == CONST_LEXEM_TYPE) {
+    //         FREE(lexem.strRepr);
+    //     }
+    // }
 
     destructSyntaxTree(&analysator->tree);
     FREE(analysator->arrOfLexems);

@@ -43,6 +43,14 @@ static SyntaxTreeErrors readSyntaxTreeFromFileRecursive(SyntaxTree* tree,
         node = getSyntaxTreeNodePtr(tree, newNodeInd);
         node->right = tree->root;
     }
+
+    if (node->lexem.lexemSpecificName == DELIMS_OPEN_CURLY_BRACKET_LEXEM) { // because it works in prefix notation
+        size_t tmp  = node->left; // change of children order (just swap)
+        node->left  = node->right;
+        node->right = tmp;
+        LOG_ERROR("BRUH-----------");
+    }
+
     tree->root = node->memBuffIndex;
 
     return SYNTAX_TREE_STATUS_OK;
