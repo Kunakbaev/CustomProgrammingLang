@@ -123,7 +123,7 @@ SyntaxTreeErrors dumpSyntaxTree(SyntaxTree* tree) {
     NODE_RULE(consts,          "#603000", "#704000", CONST_LEXEM_TYPE);
     NODE_RULE(identificators,  "#400040", "#600060", IDENTIFICATOR_LEXEM_TYPE);
     NODE_RULE(operators,       "#600000", "#800000", OPERATOR_LEXEM_TYPE);
-    NODE_RULE(keywords,        "#000060", "#000080", KEYWORD_LEXEM_TYPE);
+    NODE_RULE(keywords,        "#0050ff", "#0030cf", KEYWORD_LEXEM_TYPE);
     NODE_RULE(delims,          "#006000", "#008000", DELIM_LEXEM_TYPE);
 
     NodesWithColor coloringRule[] = {

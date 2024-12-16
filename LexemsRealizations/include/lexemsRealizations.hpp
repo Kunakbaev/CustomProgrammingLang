@@ -40,6 +40,15 @@ struct Lexem {
     };
 };
 
+#undef GENERAL_LEXEM_DEF
+
+#define GENERAL_LEXEM_DEF(lexemType, specName, repr) \
+    const Lexem SAMPLE_##specName##_NODE = {.type=lexemType, .strRepr = repr, {.lexemSpecificName = specName}};
+
+#include "../include/codeGen/allLexems.hpp"
+
+#undef GENERAL_LEXEM_DEF
+
 struct Lexem2stringSettings {
     bool isLexemTypeNeeded;
     bool isBracketsNeeded;

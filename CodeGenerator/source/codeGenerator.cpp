@@ -56,7 +56,7 @@ CodeGeneratorErrors assemblerCodeForIdentificator(const Node* node, char* linePt
     IF_ARG_NULL_RETURN(linePtr);
 
     Lexem lexem = node->lexem;
-    assert(false);
+    //assert(false);
     ADD2BUFF("push %s\n", lexem.strRepr);
 
     return CODE_GENERATOR_STATUS_OK;

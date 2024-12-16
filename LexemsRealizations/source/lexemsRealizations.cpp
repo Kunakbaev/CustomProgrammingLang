@@ -24,8 +24,6 @@ const Lexem allLexemsArr[] = {
     #include "../include/codeGen/allLexems.hpp"
 };
 
-#undef GENERAL_LEXEM_DEF
-
 
 
 #define GENERAL_LEXEM_DEF(lexemType, enumName, repr) \
@@ -69,8 +67,10 @@ LexemsRealizationsErrors initLexemWithString(const char* line, Lexem* lexem) {
     } else {
         // TODO: add identificator to table of names
         lexem->lexemSpecificName = INVALID_LEXEM;
-        lexem->strRepr = (char*)line; // ASK: is this good?
-        assert(false); // not implemented yet
+        lexem->strRepr = (char*)calloc(strlen(line) + 1, sizeof(char));
+        IF_NOT_COND_RETURN(lexem->strRepr != NULL, LEXEMS_REALIZATIONS_MEMORY_ALLOCATION_ERROR);
+        strcpy(lexem->strRepr, line);
+        //assert(false); // not implemented yet
         lexem->type = IDENTIFICATOR_LEXEM_TYPE;
     }
 
@@ -83,7 +83,7 @@ LexemsRealizationsErrors isCharLexemDelim(const char ch, bool* isDelim) {
     *isDelim = false;
     char line[] = { ch, '\0' };
     for (int i = 1; i < LEXEM_ARR_SIZE; ++i) {
-        LOG_DEBUG_VARS(i, allLexemsArr[i].strRepr);
+        //LOG_DEBUG_VARS(i, allLexemsArr[i].strRepr);
         bool isSame = strcmp(allLexemsArr[i].strRepr, line) == 0;
         if (isSame && allLexemsArr[i].type == DELIM_LEXEM_TYPE) { // second operand is just to be sure, it should not necessary as we check strings for equality
             *isDelim = true;
@@ -112,9 +112,10 @@ static LexemsRealizationsErrors initLexemFromFileFormat(LexemType type, const ch
     IF_ARG_NULL_RETURN(line);
     IF_ARG_NULL_RETURN(lexem);
 
-    lexem->type   = type;
-    char* endPtr  = NULL;
-    char* strRepr = NULL;
+    lexem->type    = type;
+    char* endPtr   = NULL;
+    char* strRepr  = NULL;
+    size_t lineLen = strlen(line);
     errno = 0;
     LOG_DEBUG_VARS(type, line);
     switch (type) {
@@ -123,9 +124,10 @@ static LexemsRealizationsErrors initLexemFromFileFormat(LexemType type, const ch
             assert(errno == 0);
 
         case IDENTIFICATOR_LEXEM_TYPE:
-            strRepr = (char*)calloc(strlen(line) + 1, sizeof(char));
+            strRepr = (char*)calloc(lineLen + 1, sizeof(char));
             IF_NOT_COND_RETURN(strRepr != NULL, LEXEMS_REALIZATIONS_MEMORY_ALLOCATION_ERROR);
             strcpy(strRepr, line);
+            strRepr[lineLen - 1] = '\0';
             lexem->strRepr = strRepr;
             break;
 
@@ -219,6 +221,7 @@ LexemsRealizationsErrors getLexemDebugString(const Lexem* lexem, char** result) 
             break;
         case IDENTIFICATOR_LEXEM_TYPE:
             strcpy(*result, lexem->strRepr);
+            LOG_DEBUG_VARS(lexem->strRepr, *result);
             break;
         default:
             assert(false); // TODO: unknown lexem type
@@ -232,7 +235,7 @@ LexemsRealizationsErrors getLexemDataString(const Lexem* lexem, const Lexem2stri
     IF_ARG_NULL_RETURN(settings);
     IF_ARG_NULL_RETURN(line);
 
-    const size_t MAX_LINE_LEN = 30;
+    const size_t MAX_LINE_LEN = 50;
     *line = (char*)calloc(MAX_LINE_LEN, sizeof(char));
     IF_NOT_COND_RETURN(*line != NULL, LEXEMS_REALIZATIONS_MEMORY_ALLOCATION_ERROR);
 
@@ -247,6 +250,7 @@ LexemsRealizationsErrors getLexemDataString(const Lexem* lexem, const Lexem2stri
     char* debugStr = NULL;
     IF_ERR_RETURN(getLexemDebugString(lexem, &debugStr));
     ADD2BUFF(" %s ", debugStr);
+    LOG_DEBUG_VARS(linePtr);
     FREE(debugStr);
     if (settings->isBracketsNeeded)  ADD2BUFF("%s", ")");
 

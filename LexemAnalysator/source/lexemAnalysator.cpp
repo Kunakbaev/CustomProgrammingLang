@@ -211,14 +211,15 @@ LexemAnalysatorErrors getArrayOfLexems(LexemAnalysator* analysator) {
 
     const char* naturalDelims = "\t\n ";
     size_t curCharInd = 0;
+    bool isPrevLexemDelim = false;
     for (size_t i = 0; i < analysator->inputStringLen; ++i) {
         char curCh = i < analysator->inputStringLen ? analysator->inputString[i] : ' '; // ' ' is delimeter
         bool isDelim = false;
         isCharLexemDelim(curCh, &isDelim);
 
         bool isNaturalDelim = strchr(naturalDelims, curCh) != NULL;
-        //LOG_DEBUG_VARS(curCh, i, tmpString, isDelim, isNaturalDelim);
-        if (isDelim || isNaturalDelim) {
+        LOG_DEBUG_VARS(curCh, i, tmpString, isDelim, isNaturalDelim);
+        if (isDelim || isNaturalDelim || isPrevLexemDelim) {
             if (strlen(tmpString) > 0) {
                 Lexem* lexem = &analysator->array[analysator->arrLen++];
                 initLexemWithString(tmpString, lexem); // TODO: add error check
@@ -227,11 +228,16 @@ LexemAnalysatorErrors getArrayOfLexems(LexemAnalysator* analysator) {
 
             //LOG_DEBUG_VARS("-----------------");
             curCharInd = 0;
-            if (!isDelim)
+            if (isNaturalDelim) {
+                isPrevLexemDelim = false;
                 continue;
+            }
         }
 
         tmpString[curCharInd++] = curCh;
+        isPrevLexemDelim = false;
+        if (isDelim)
+            isPrevLexemDelim = true;
     }
 
     IF_ERR_RETURN(dumpLexemAnalysator(analysator));

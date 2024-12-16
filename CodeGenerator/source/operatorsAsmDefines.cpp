@@ -38,10 +38,10 @@
 
 #define OPERATOR_EQUAL_LEXEM_ASM_DEF()                      \
     do {                                                    \
-        GEN4LEFT();                                         \
         GEN4RIGHT();                                        \
         ADD_TABS();                                         \
-        ADD2BUFF("equal\n");                                \
+        Node left = *getSyntaxTreeNodePtr(tree, node.left); \
+        ADD2BUFF("pop %s", left.lexem.strRepr);             \
         PRINT();                                            \
     } while (0)
 
