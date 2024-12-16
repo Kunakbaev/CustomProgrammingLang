@@ -221,7 +221,7 @@ LexemsRealizationsErrors getLexemDebugString(const Lexem* lexem, char** result) 
             break;
         case IDENTIFICATOR_LEXEM_TYPE:
             strcpy(*result, lexem->strRepr);
-            LOG_DEBUG_VARS(lexem->strRepr, *result);
+            //LOG_DEBUG_VARS(lexem->strRepr, *result);
             break;
         default:
             assert(false); // TODO: unknown lexem type
@@ -250,7 +250,7 @@ LexemsRealizationsErrors getLexemDataString(const Lexem* lexem, const Lexem2stri
     char* debugStr = NULL;
     IF_ERR_RETURN(getLexemDebugString(lexem, &debugStr));
     ADD2BUFF(" %s ", debugStr);
-    LOG_DEBUG_VARS(linePtr);
+    //LOG_DEBUG_VARS(linePtr);
     FREE(debugStr);
     if (settings->isBracketsNeeded)  ADD2BUFF("%s", ")");
 

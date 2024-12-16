@@ -95,7 +95,7 @@ SyntaxTreeErrors dumpSyntaxTree(SyntaxTree* tree) {
 
         LexemType id = lexem.type;
         assert(1 <= id && id <= NUM_OF_DIFF_LEXEM_TYPES);
-        LOG_DEBUG_VARS(diffNodeTypesPtr[id]);
+        //LOG_DEBUG_VARS(diffNodeTypesPtr[id]);
         assert(diffNodeTypesPtr[id] < MAX_NUM_OF_NODES_IN_ONE_COLOR_WITH_NODES_STRUCT);
         diffNodeTypes[id][diffNodeTypesPtr[id]++] = nodeInd;
     }

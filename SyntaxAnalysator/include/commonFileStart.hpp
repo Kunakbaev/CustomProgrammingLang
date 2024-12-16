@@ -6,7 +6,7 @@
 #define IF_ERR_RETURN(error) do {\
         SyntaxAnalysatorErrors errorTmp = (error); \
         if (errorTmp != SYNTAX_ANALYSATOR_STATUS_OK) {\
-            LOG_DEBUG(getSyntaxAnalysatorErrorMessage(errorTmp));\
+            LOG_ERROR(getSyntaxAnalysatorErrorMessage(errorTmp));\
             return errorTmp;\
         }\
     } while (0)
@@ -16,7 +16,7 @@
     do {\
         bool tmpCond = (condition);\
         if (!tmpCond) {\
-            LOG_DEBUG_VARS("condition not satisfied", #condition);\
+            LOG_ERROR("condition not satisfied"); LOG_ERROR(#condition);\
             return error;\
         }\
     } while (0)

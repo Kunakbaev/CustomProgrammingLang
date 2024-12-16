@@ -30,7 +30,11 @@ SyntaxAnalysatorErrors parseWhileLoop(SyntaxAnalysator* analysator);
 SyntaxAnalysatorErrors parseIfKeyword(SyntaxAnalysator* analysator);
 SyntaxAnalysatorErrors parseFunctionCall(SyntaxAnalysator* analysator);
 
-SyntaxAnalysatorErrors parseEqualOperator(SyntaxAnalysator* analysator);
+// no functions that are called inside boolean condition, only vars, consts and simple identificators
+SyntaxAnalysatorErrors parseBooleanCondition(SyntaxAnalysator* analysator);
+
+SyntaxAnalysatorErrors parseAssignOperator(SyntaxAnalysator* analysator);
+SyntaxAnalysatorErrors parseCompareOperator(SyntaxAnalysator* analysator);
 SyntaxAnalysatorErrors parseAdditionSubtractionOperators(SyntaxAnalysator* analysator);
 SyntaxAnalysatorErrors parseMultiplicationDivisionOperators(SyntaxAnalysator* analysator);
 SyntaxAnalysatorErrors parseSimpleBracketDelim(SyntaxAnalysator* analysator);
@@ -126,6 +130,7 @@ SyntaxAnalysatorErrors parseBlockOfCode(SyntaxAnalysator* analysator) {
         IF_ERR_RETURN(parseBlockOfCode(analysator));
         size_t rightOperand = ANALYSATOR_ROOT;
 
+        LOG_DEBUG_VARS(GET_CUR_LEXEM().strRepr);
         REQUIRE_LEXEM(DELIMS_SEMICOLON_LEXEM);
         MOVE_CUR_LEX_PTR();
 
@@ -156,26 +161,24 @@ SyntaxAnalysatorErrors parseBlockOfCode(SyntaxAnalysator* analysator) {
 #define TRY_PARSER_FUNC(function)                               \
     do {                                                        \
         size_t wasLexemInd = analysator->curLexemInd;           \
+        size_t wasRoot     = analysator->tree.root;             \
         SyntaxAnalysatorErrors err = function(analysator);      \
         if (err == SYNTAX_ANALYSATOR_STATUS_OK)                 \
             return SYNTAX_ANALYSATOR_STATUS_OK;                 \
+        analysator->tree.root = wasRoot;                        \
         analysator->curLexemInd = wasLexemInd;                  \
     } while (0)
 
 
-int cnt = 0;
 SyntaxAnalysatorErrors parseSingleCommandLine(SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
 
-    LOG_DEBUG_VARS("bruh");
     TRY_PARSER_FUNC(parseFunctionCall);
-    openImageOfCurrentStateSyntaxTree(&analysator->tree);
-    LOG_DEBUG_VARS("bruh");
-    openImageOfCurrentStateSyntaxTree(&analysator->tree);
+    // openImageOfCurrentStateSyntaxTree(&analysator->tree);
+    // openImageOfCurrentStateSyntaxTree(&analysator->tree);
     TRY_PARSER_FUNC(parseVariablesDeclaration);
-    LOG_ERROR("----------------------------");
 
-    TRY_PARSER_FUNC(parseEqualOperator);
+    TRY_PARSER_FUNC(parseAssignOperator);
 
     TRY_PARSER_FUNC(parseWhileLoop);
     TRY_PARSER_FUNC(parseIfKeyword);
@@ -186,20 +189,9 @@ SyntaxAnalysatorErrors parseSingleCommandLine(SyntaxAnalysator* analysator) {
 SyntaxAnalysatorErrors parseVariablesDeclaration(SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
 
-    Lexem lexem = GET_CUR_LEXEM();
-    if (!isCurLexem_KEYWORD_INT_LEXEM(analysator))
-        return SYNTAX_ANALYSATOR_INVALID_ARGUMENT; // TODO: add error
-
+    REQUIRE_LEXEM(KEYWORD_INT_LEXEM);
     MOVE_CUR_LEX_PTR();
 
-    // LOG_ERROR("---------------------");
-    // Lexem curLexem = GET_CUR_LEXEM();
-    // LOG_DEBUG_VARS(curLexem.strRepr);
-    // curLexem = GET_CUR_LEXEM();
-    // LOG_DEBUG_VARS(curLexem.strRepr);
-
-    //setNew_KEYWORD_INT_LEXEM_nodeAsRoot(analysator, 0, 0);
-    //IF_ERR_RETURN(parseTerminal(analysator));
     size_t leftOperand = 0;
     while (analysator->curLexemInd < analysator->lenOfArr &&
            !isCurLexem_DELIMS_SEMICOLON_LEXEM(analysator)) {
@@ -250,7 +242,6 @@ SyntaxAnalysatorErrors parseFunctionCall(SyntaxAnalysator* analysator) {
             MOVE_CUR_LEX_PTR();
         }
 
-        LOG_ERROR("hhhhhhhhhhhhhh");
         setNew_DELIMS_COMMA_LEXEM_nodeAsRoot(analysator, leftOperand, rightOperand);
         openImageOfCurrentStateSyntaxTree(&analysator->tree);
         leftOperand = ANALYSATOR_ROOT;
@@ -259,15 +250,67 @@ SyntaxAnalysatorErrors parseFunctionCall(SyntaxAnalysator* analysator) {
     SET_NEW_ROOT(NEW_IDENTIFICATOR_NODE(curLexem, leftOperand, 0));
     REQUIRE_LEXEM(DELIMS_CLOSE_SIMPLE_BRACKET_LEXEM);
     MOVE_CUR_LEX_PTR();
-    openImageOfCurrentStateSyntaxTree(&analysator->tree);
+    //openImageOfCurrentStateSyntaxTree(&analysator->tree);
 
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }
 
+
+
+
+
+
+SyntaxAnalysatorErrors parseBooleanCondition(SyntaxAnalysator* analysator) {
+    IF_ARG_NULL_RETURN(analysator);
+
+    IF_ERR_RETURN(parseAssignOperator(analysator));
+
+    return SYNTAX_ANALYSATOR_STATUS_OK;
+}
+
+
+// check for a first keyword (while or if) is already been done in according functions
+static SyntaxAnalysatorErrors commonParserForWhileAndIf(SyntaxAnalysator* analysator, bool isWhileKeyword) {
+    IF_ARG_NULL_RETURN(analysator);
+    //IF_ARG_NULL_RETURN(parseLexem);
+
+    REQUIRE_LEXEM(DELIMS_OPEN_SIMPLE_BRACKET_LEXEM);
+    Lexem curLex = GET_CUR_LEXEM();
+    LOG_DEBUG_VARS(curLex.strRepr);
+    LOG_ERROR("while boom");
+    MOVE_CUR_LEX_PTR();
+
+    // ???
+    IF_ERR_RETURN(parseBooleanCondition(analysator));
+    size_t bracketsOperand = ANALYSATOR_ROOT;
+
+    REQUIRE_LEXEM(DELIMS_CLOSE_SIMPLE_BRACKET_LEXEM);
+    MOVE_CUR_LEX_PTR();
+
+    LOG_ERROR("while1 --------------");
+    IF_ERR_RETURN(parseBlockOfCode(analysator));
+    size_t blockOfCodeOperand = ANALYSATOR_ROOT;
+
+    if (isWhileKeyword) {
+        setNew_KEYWORD_WHILE_LEXEM_nodeAsRoot(analysator, bracketsOperand, blockOfCodeOperand);
+        LOG_DEBUG_VARS(bracketsOperand, blockOfCodeOperand);
+        LOG_ERROR("while2");
+        openImageOfCurrentStateSyntaxTree(&analysator->tree);
+    } else {
+        setNew_KEYWORD_IF_LEXEM_nodeAsRoot(analysator, bracketsOperand, blockOfCodeOperand);
+    }
+
+    return SYNTAX_ANALYSATOR_STATUS_OK;
+}
+
+
 SyntaxAnalysatorErrors parseWhileLoop(SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
 
+    REQUIRE_LEXEM(KEYWORD_WHILE_LEXEM);
+    MOVE_CUR_LEX_PTR();
 
+    IF_ERR_RETURN(commonParserForWhileAndIf(analysator, true));
 
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }
@@ -275,10 +318,15 @@ SyntaxAnalysatorErrors parseWhileLoop(SyntaxAnalysator* analysator) {
 SyntaxAnalysatorErrors parseIfKeyword(SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
 
+    REQUIRE_LEXEM(KEYWORD_IF_LEXEM);
+    MOVE_CUR_LEX_PTR();
 
+    IF_ERR_RETURN(commonParserForWhileAndIf(analysator, false));
 
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }
+
+
 
 
 
@@ -299,11 +347,13 @@ SyntaxAnalysatorErrors commonParserOfIterativeOperators(SyntaxAnalysator* analys
     while (analysator->curLexemInd < analysator->lenOfArr &&
            (*doesSatisfyRule)(GET_CUR_LEXEM())) {
         Lexem curLexem = GET_CUR_LEXEM();
+        LOG_DEBUG_VARS("bruh");
         MOVE_CUR_LEX_PTR();
         size_t leftOperand = ANALYSATOR_ROOT;
 
         IF_ERR_RETURN((*nextParseFunc)(analysator));
         size_t rightOperand = ANALYSATOR_ROOT;
+        LOG_DEBUG_VARS(leftOperand, rightOperand);
 
         SET_NEW_ROOT(NEW_OPERATOR_LEXEM_NODE(curLexem, leftOperand, rightOperand));
     }
@@ -311,19 +361,66 @@ SyntaxAnalysatorErrors commonParserOfIterativeOperators(SyntaxAnalysator* analys
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }
 
-bool equalOpRule(Lexem lexem) {
-    return isLexem_OPERATOR_EQUAL_LEXEM(&lexem);
+bool assignOpRule(Lexem lexem) {
+    return isLexem_OPERATOR_ASSIGN_LEXEM(&lexem);
 }
 
-SyntaxAnalysatorErrors parseEqualOperator(SyntaxAnalysator* analysator) {
+SyntaxAnalysatorErrors parseAssignOperator(SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
 
     Lexem lexem = {
         .type = OPERATOR_LEXEM_TYPE,
         "=",
-        {.lexemSpecificName = OPERATOR_EQUAL_LEXEM},
+        {.lexemSpecificName = OPERATOR_ASSIGN_LEXEM},
     };
-    IF_ERR_RETURN(commonParserOfIterativeOperators(analysator, equalOpRule, parseAdditionSubtractionOperators));
+    IF_ERR_RETURN(commonParserOfIterativeOperators(analysator, assignOpRule, parseCompareOperator));
+
+    return SYNTAX_ANALYSATOR_STATUS_OK;
+}
+
+bool compareOpRule(Lexem lexem) {
+    return isLexem_OPERATOR_GREATER_LEXEM(&lexem) ||
+           isLexem_OPERATOR_LESS_LEXEM(&lexem) ||
+           isLexem_OPERATOR_IS_EQUAL_LEXEM(&lexem) ||
+           isLexem_OPERATOR_LESS_OR_EQUAL_LEXEM(&lexem) ||
+           isLexem_OPERATOR_GREATER_OR_EQUAL_LEXEM(&lexem);
+}
+
+SyntaxAnalysatorErrors parseCompareOperator(SyntaxAnalysator* analysator) {
+    IF_ARG_NULL_RETURN(analysator);
+
+    // ASK: cringe?
+    bool was = false;
+    while (!isCurLexem_DELIMS_SEMICOLON_LEXEM(analysator)) { // WARNING: be careful
+        LOG_ERROR("biba bouba");
+        LOG_DEBUG_VARS(GET_CUR_LEXEM().strRepr);
+        SyntaxAnalysatorErrors err = parseAdditionSubtractionOperators(analysator);
+        // FIXME:
+        if (err != SYNTAX_ANALYSATOR_STATUS_OK) {
+            if (!was) return SYNTAX_ANALYSATOR_INVALID_ARGUMENT;
+            break;
+        }
+
+        was = true;
+        size_t leftOperand = ANALYSATOR_ROOT;
+        Lexem curLexem = GET_CUR_LEXEM();
+        //LOG_ERROR("compare -------------------------------");
+        //LOG_DEBUG_VARS(curLexem.strRepr, isLexem_OPERATOR_LESS_LEXEM(&curLexem));
+        if (!compareOpRule(curLexem)) break;
+        MOVE_CUR_LEX_PTR();
+
+        //LOG_ERROR("compare -------------------------------");
+        Lexem le = GET_CUR_LEXEM();
+        LOG_DEBUG_VARS(le.strRepr);
+        IF_ERR_RETURN(parseAdditionSubtractionOperators(analysator));
+        size_t rightOperand = ANALYSATOR_ROOT;
+        //LOG_DEBUG_VARS(leftOperand, rightOperand);
+
+        size_t newRoot = NEW_OPERATOR_LEXEM_NODE(curLexem, leftOperand, rightOperand);
+        SET_NEW_ROOT(newRoot);
+        // LOG_DEBUG_VARS(curLexem.strRepr, isLexem_OPERATOR_LESS_LEXEM(&curLexem));
+        //openImageOfCurrentStateSyntaxTree(&analysator->tree);
+    }
 
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }
@@ -358,12 +455,14 @@ SyntaxAnalysatorErrors parseSimpleBracketDelim(SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
 
     if (!isCurLexem_DELIMS_OPEN_SIMPLE_BRACKET_LEXEM(analysator)) {
+        Lexem lex = GET_CUR_LEXEM();
+        LOG_DEBUG_VARS("parse terminal in brackets", lex.strRepr);
         IF_ERR_RETURN(parseTerminal(analysator));
         return SYNTAX_ANALYSATOR_STATUS_OK;
     }
 
     MOVE_CUR_LEX_PTR();
-    IF_ERR_RETURN(parseEqualOperator(analysator));
+    IF_ERR_RETURN(parseAssignOperator(analysator));
     REQUIRE_LEXEM(DELIMS_CLOSE_SIMPLE_BRACKET_LEXEM);
     MOVE_CUR_LEX_PTR();
 

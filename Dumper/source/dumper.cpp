@@ -132,6 +132,13 @@ static DumperErrors addNodeDumpStructToBuffer(const Dumper* dumper,
     if (node != NULL) {
         char* lexemDataStr = NULL;
         LEXEMS_REALIZATION_ERR_CHECK(getLexemDataString(&node->lexem, &settings->lexem2stringSettings, &lexemDataStr));
+        #include "../../SyntaxAnalysator/include/syntaxAnalysator.hpp"
+        Lexems id = node->lexem.lexemSpecificName;
+        if (id == OPERATOR_LESS_LEXEM)             strcpy(lexemDataStr, "&lt;");
+        if (id == OPERATOR_GREATER_LEXEM)          strcpy(lexemDataStr, "&gt;");
+        if (id == OPERATOR_LESS_OR_EQUAL_LEXEM)    strcpy(lexemDataStr, "&lt;=");
+        if (id == OPERATOR_GREATER_OR_EQUAL_LEXEM) strcpy(lexemDataStr, "&gt;=");
+        //LOG_DEBUG_VARS(lexemDataStr);
         //LOG_DEBUG_VARS(nodesDataStr, node->data, node->memBuffIndex);
 
         char* tmpPtr = tmpBuffer;
@@ -307,7 +314,7 @@ DumperErrors dumperDumpSyntaxTree(Dumper* dumper, const SyntaxTree* tree,
     IF_ARG_NULL_RETURN(tree);
 
     // LOG_DEBUG_VARS(dumper, tree->dumper);
-    LOG_DEBUG("typical binary tree dumping ---------------------");
+    LOG_DEBUG("syntax tree dumping ---------------------");
     ++dumper->numberOfLogsBefore;
     memset(fileNameBuffer, 0, FILE_NAME_BUFFER_SIZE);
     snprintf(fileNameBuffer, FILE_NAME_BUFFER_SIZE, "dots/%zu_list.dot",

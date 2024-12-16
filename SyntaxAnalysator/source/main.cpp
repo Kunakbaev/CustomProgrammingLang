@@ -14,6 +14,9 @@ int main() {
     SyntaxAnalysator analysator = {};
     constructSyntaxAnalysator(sourceFilePath, destFilePath, &analysator, &dumper);
     readArrOfLexemsFromFile(&analysator);
+
+    dumpSyntaxAnalysatorArrOfLexems(&analysator);
+
     dumpSyntaxAnalysatorArrOfLexems(&analysator);
     generateSyntaxTree(&analysator);
 

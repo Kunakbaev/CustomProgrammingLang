@@ -20,6 +20,7 @@ SyntaxAnalysatorErrors constructSyntaxAnalysator(const char* sourceFilePath,
                                                  const char* destFilePath,
                                                  SyntaxAnalysator* analysator,
                                                  Dumper* dumper);
+bool compareOpRule(Lexem lexem);
 SyntaxAnalysatorErrors dumpSyntaxAnalysatorTreeInConsole(const SyntaxAnalysator* analysator);
 SyntaxAnalysatorErrors dumpSyntaxAnalysatorArrOfLexems(const SyntaxAnalysator* analysator);
 SyntaxAnalysatorErrors readArrOfLexemsFromFile(SyntaxAnalysator* analysator);
