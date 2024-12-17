@@ -132,7 +132,7 @@ SyntaxTreeErrors dumpSyntaxTree(SyntaxTree* tree) {
     DumperSettings settings = {
         .coloringRule           = coloringRule,
         .coloringRuleLen        = ARR_LEN(coloringRule),
-        .isMemIndexesInfoNeeded = false,
+        .isMemIndexesInfoNeeded = true,
         .lexem2stringSettings   = lexemDumpSettings,
     };
     DUMPER_ERR_CHECK(dumperDumpSyntaxTree(tree->dumper, tree, &settings));

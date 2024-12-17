@@ -204,7 +204,7 @@ SyntaxAnalysatorErrors parseSingleCommandLine(SyntaxAnalysator* analysator) {
     TRY_PARSER_FUNC(parseInputKeyword);
     TRY_PARSER_FUNC(parseOutputKeyword);
 
-    return SYNTAX_ANALYSATOR_STATUS_OK;
+    return SYNTAX_ANALYSATOR_INVALID_ARGUMENT;
 }
 
 typedef bool (isCurLexemEq2lexemFuncPtr)(const SyntaxAnalysator* analysator);
@@ -260,9 +260,9 @@ SyntaxAnalysatorErrors parseVariablesDeclaration(SyntaxAnalysator* analysator) {
 }
 
 SyntaxAnalysatorErrors parseFuncArgs(
-SyntaxAnalysator*       analysator,
-parserFunctionPtr       nextParseFuncPtr,
-size_t*                 resultNode
+    SyntaxAnalysator*       analysator,
+    parserFunctionPtr       nextParseFuncPtr,
+    size_t*                 resultNode
 ) {
     IF_ARG_NULL_RETURN(analysator);
     IF_ARG_NULL_RETURN(nextParseFuncPtr);
@@ -337,7 +337,7 @@ SyntaxAnalysatorErrors parseFunctionDeclaration(SyntaxAnalysator* analysator) {
     size_t blockOfCodeOperand = ANALYSATOR_ROOT;
 
     SET_NEW_ROOT(NEW_IDENTIFICATOR_NODE(funcNameLexem, argsOperand, blockOfCodeOperand));
-    // setNew_KEYWORD_INT_LEXEM_nodeAsRoot(analysator, ANALYSATOR_ROOT, 0);
+    setNew_KEYWORD_INT_LEXEM_nodeAsRoot(analysator, ANALYSATOR_ROOT, 0);
 
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }
@@ -355,7 +355,7 @@ SyntaxAnalysatorErrors parseFunctionCall(SyntaxAnalysator* analysator) {
 
     LOG_ERROR("parse func call");
     SET_NEW_ROOT(NEW_IDENTIFICATOR_NODE(curLexem, argsOperand, 0));
-    //openImageOfCurrentStateSyntaxTree(&analysator->tree);
+    openImageOfCurrentStateSyntaxTree(&analysator->tree);
 
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }
@@ -404,6 +404,7 @@ static SyntaxAnalysatorErrors commonParserForWhileAndIf(SyntaxAnalysator* analys
     IF_ARG_NULL_RETURN(analysator);
     //IF_ARG_NULL_RETURN(parseLexem);
 
+    LOG_DEBUG_VARS("ifwhile");
     REQUIRE_LEXEM(DELIMS_OPEN_SIMPLE_BRACKET_LEXEM);
     Lexem curLex = GET_CUR_LEXEM();
     LOG_DEBUG_VARS(curLex.strRepr);
@@ -493,11 +494,6 @@ bool assignOpRule(Lexem lexem) {
 SyntaxAnalysatorErrors parseAssignOperator(SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
 
-    Lexem lexem = {
-        .type = OPERATOR_LEXEM_TYPE,
-        "=",
-        {.lexemSpecificName = OPERATOR_ASSIGN_LEXEM},
-    };
     IF_ERR_RETURN(commonParserOfIterativeOperators(analysator, assignOpRule, parseCompareOperator));
 
     return SYNTAX_ANALYSATOR_STATUS_OK;
@@ -563,7 +559,20 @@ SyntaxAnalysatorErrors parseAdditionSubtractionOperators(SyntaxAnalysator* analy
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }
 
-bool mulDivOpRule(Lexem lexem) {
+static SyntaxAnalysatorErrors parseBracketsOrFuncCalls(SyntaxAnalysator* analysator) {
+    IF_ARG_NULL_RETURN(analysator);
+
+    // WARNING: in different order it doesn't work, bruh
+    LOG_DEBUG_VARS(GET_CUR_LEXEM().strRepr);
+    LOG_DEBUG_VARS(GET_CUR_LEXEM().strRepr);
+    TRY_PARSER_FUNC(parseFunctionCall);
+    LOG_DEBUG_VARS(GET_CUR_LEXEM().strRepr);
+    TRY_PARSER_FUNC(parseSimpleBracketDelim);
+
+    return SYNTAX_ANALYSATOR_INVALID_ARGUMENT;
+}
+
+static bool mulDivOpRule(Lexem lexem) {
     return isLexem_OPERATOR_MUL_LEXEM(&lexem) ||
            isLexem_OPERATOR_DIV_LEXEM(&lexem);
 }
@@ -571,7 +580,7 @@ bool mulDivOpRule(Lexem lexem) {
 SyntaxAnalysatorErrors parseMultiplicationDivisionOperators(SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
 
-    IF_ERR_RETURN(commonParserOfIterativeOperators(analysator, mulDivOpRule, parseSimpleBracketDelim));
+    IF_ERR_RETURN(commonParserOfIterativeOperators(analysator, mulDivOpRule, parseBracketsOrFuncCalls));
 
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }

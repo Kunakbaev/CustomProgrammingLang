@@ -1,6 +1,7 @@
 #include "../../external/LoggerLib/include/logLib.hpp"
 #include "../include/codeGenerator.hpp"
 #include "../../Dumper/include/dumper.hpp"
+#include "../../SemanticChecker/include/semanticChecker.hpp"
 
 int main() {
     setLoggingLevel(DEBUG);
@@ -16,8 +17,15 @@ int main() {
     readCodeGeneratorSyntaxTreeFromFile(&generator);
     openImageOfCurrentStateSyntaxTree(&generator.tree);
 
-    generateAssemblerCodeFromSyntaxTree(&generator);
+    SemanticChecker checker = {};
+    constructSemanticChecker(&checker, &generator.tree);
+    buildTableOfIdentificators(&checker);
+    dumpTableOfIdentificators(&checker);
+    semanticCheckOfSyntaxTree(&checker);
 
+    //generateAssemblerCodeFromSyntaxTree(&generator);
+
+    destructSemanticChecker(&checker);
     destructCodeGenerator(&generator);
     dumperDestructor(&dumper);
 

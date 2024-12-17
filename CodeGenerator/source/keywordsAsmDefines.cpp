@@ -70,3 +70,12 @@
         ADD2BUFF("out\n");                                  \
         PRINT();\
     } while (0)
+
+#define KEYWORD_RETURN_LEXEM_ASM_DEF()                      \
+    do {                                                    \
+        GEN4LEFT();\
+        GEN4RIGHT();\
+        ADD_TABS();\
+        ADD2BUFF("ret\n");\
+        PRINT();\
+    } while (0)

@@ -28,6 +28,7 @@ SRC := 						\
 	$(LEXEM_REALIZATIONS_PATH)/errorsHandler.cpp\
 	$(SYNTAX_TREE_PATH)/syntaxTree.cpp\
 	$(SYNTAX_TREE_PATH)/syntaxTreeErrorsHandler.cpp\
+	$(SYNTAX_TREE_PATH)/assignParents.cpp\
 	$(DUMPER_MODULE_PATH)/dumper.cpp\
 	$(SOURCE_DIR)/main.cpp					\
 	$(SOURCE_DIR)/syntaxAnalysator.cpp					\

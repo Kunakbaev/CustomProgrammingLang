@@ -1,10 +1,9 @@
-int add2nums(int a, int b) {
-    return a + b;
-};
 
 int main() {
-    int x, y;
-    input(x);
-    input(y);
-    return 0;
+    int add2nums() {
+        return;
+    };
+    add2nums();
 };
+
+add2nums();

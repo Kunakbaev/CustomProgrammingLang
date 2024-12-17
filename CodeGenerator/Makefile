@@ -10,6 +10,7 @@ SOURCE_DIR		   			:= source
 LEXEM_REALIZATIONS_PATH		:= ../LexemsRealizations/source
 SYNTAX_TREE_PATH			:= ../SyntaxTree/source
 DUMPER_MODULE_PATH 			:= ../Dumper/source
+SEMANTIC_CHECK_MODULE_PATH  := ../SemanticChecker/source
 MODULE_NAME       			:= CodeGenerator
 BUILD_DIR          			:= building
 LOGGER_EXT_LIB_DIR 			:= external/LoggerLib
@@ -27,7 +28,10 @@ SRC := 						\
 	$(LEXEM_REALIZATIONS_PATH)/lexemsRealizations.cpp\
 	$(LEXEM_REALIZATIONS_PATH)/errorsHandler.cpp\
 	$(SYNTAX_TREE_PATH)/syntaxTree.cpp\
+	$(SYNTAX_TREE_PATH)/assignParents.cpp\
 	$(SYNTAX_TREE_PATH)/syntaxTreeErrorsHandler.cpp\
+	$(SEMANTIC_CHECK_MODULE_PATH)/semanticChecker.cpp\
+	$(SEMANTIC_CHECK_MODULE_PATH)/semanticCheckerErrorsHandler.cpp\
 	$(DUMPER_MODULE_PATH)/dumper.cpp\
 	$(SOURCE_DIR)/main.cpp					\
 	$(SOURCE_DIR)/codeGenerator.cpp					\
@@ -50,6 +54,9 @@ $(BUILD_DIR)/%.o: $(SYNTAX_TREE_PATH)/%.cpp | $(BUILD_DIR)
 	$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
 
 $(BUILD_DIR)/%.o: $(DUMPER_MODULE_PATH)/%.cpp | $(BUILD_DIR)
+	$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
+
+$(BUILD_DIR)/%.o: $(SEMANTIC_CHECK_MODULE_PATH)/%.cpp | $(BUILD_DIR)
 	$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
 
 # WARNING: always cleans building directory

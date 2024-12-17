@@ -56,6 +56,8 @@ static SyntaxTreeErrors readSyntaxTreeFromFileRecursive(SyntaxTree* tree,
     return SYNTAX_TREE_STATUS_OK;
 }
 
+#include "../include/assignParents.hpp"
+
 SyntaxTreeErrors readSyntaxTreeFromFile(SyntaxTree* tree, const char* sourceFilePath) {
     IF_ARG_NULL_RETURN(tree);
     IF_ARG_NULL_RETURN(sourceFilePath);
@@ -70,6 +72,8 @@ SyntaxTreeErrors readSyntaxTreeFromFile(SyntaxTree* tree, const char* sourceFile
     FREE(lineBuffer);
 
     fclose(file);
+
+    IF_ERR_RETURN(assignParentNodes(tree, tree->root, 0));
 
     return SYNTAX_TREE_STATUS_OK;
 }

@@ -1,5 +1,5 @@
 #include "../include/commonFileStart.hpp"
-#include "../include/assingParents.hpp"
+#include "../include/assignParents.hpp"
 
 SyntaxTreeErrors assignParentNodes(SyntaxTree* tree, size_t nodeInd, size_t parentInd) {
     IF_ARG_NULL_RETURN(tree);
