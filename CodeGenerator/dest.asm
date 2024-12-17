@@ -1,4 +1,24 @@
+
+	whileStart:
+	push x
+	push 10.00
+	lessOrEqualCmp
+		push x
+		push 10.00
+		add
+		pop x
+
+	jmp whileStart:
+	endWhile:
+
 	push y
-	push 5.00
+	push 4.00
+	greaterCmp
+	push 0
+	je endif:
+	push x
+	push 3.00
 	add
-	pop x
+	pop y
+	endif:
+

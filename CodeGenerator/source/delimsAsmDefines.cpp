@@ -22,7 +22,15 @@
         PRINT();                                            \
     } while (0)
 
-#define DELIMS_OPEN_SIMPLE_BRACKET_LEXEM_ASM_DEF()
+#define DELIMS_OPEN_SIMPLE_BRACKET_LEXEM_ASM_DEF()\
+    do {                                                    \
+        GEN4LEFT();                                         \
+        GEN4RIGHT();                                        \
+        PRINT();                                            \
+    } while (0)
+
+
+
 #define DELIMS_CLOSE_SIMPLE_BRACKET_LEXEM_ASM_DEF()
 #define DELIMS_COMMA_LEXEM_ASM_DEF()
 

@@ -1,7 +1,7 @@
 #include "../include/codeGenerator.hpp"
 #include "../include/commonFileStart.hpp"
 
-const size_t MAX_LINE_LEN = 1 << 8;
+const size_t MAX_LINE_LEN = 1 << 10;
 
 char* line = NULL;
 
@@ -41,6 +41,8 @@ void clearLine() {
 #define ADD2BUFF(format, ...) \
     linePtr += snprintf(linePtr, MAX_LINE_LEN - (linePtr - line), format, ##__VA_ARGS__);
 
+#define CLEAR_LINE() clearLine(), linePtr = line
+
 CodeGeneratorErrors assemblerCodeForConst(const Node* node, char* linePtr) {
     IF_ARG_NULL_RETURN(node);
     IF_ARG_NULL_RETURN(linePtr);
@@ -78,18 +80,24 @@ CodeGeneratorErrors recursiveGenerationOfAssemblerCode(const SyntaxTree* tree,
     Node node = *getSyntaxTreeNodePtr(tree, curNodeInd);
     Lexem lexem = node.lexem;
     char* linePtr = line;
-    LOG_DEBUG_VARS(depthInBlocksOfCode);
+    //LOG_DEBUG_VARS(depthInBlocksOfCode);
+    LOG_DEBUG_VARS(lexem.strRepr);
+
+    if (lexem.lexemSpecificName == KEYWORD_INT_LEXEM)
+        return CODE_GENERATOR_STATUS_OK;
 
     if (lexem.type == CONST_LEXEM_TYPE) {
         ADD_TABS();
         IF_ERR_RETURN(assemblerCodeForConst(&node, linePtr));
         PRINT();
+        CLEAR_LINE();
         return CODE_GENERATOR_STATUS_OK;
     }
     if (lexem.type == IDENTIFICATOR_LEXEM_TYPE) {
         ADD_TABS();
         IF_ERR_RETURN(assemblerCodeForIdentificator(&node, linePtr));
         PRINT();
+        CLEAR_LINE();
         return CODE_GENERATOR_STATUS_OK;
     }
 
@@ -106,7 +114,7 @@ CodeGeneratorErrors recursiveGenerationOfAssemblerCode(const SyntaxTree* tree,
 
     #undef GENERAL_LEXEM_DEF
 
-    clearLine();
+    CLEAR_LINE();
 
     return CODE_GENERATOR_STATUS_OK;
 }
