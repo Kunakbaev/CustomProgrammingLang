@@ -31,6 +31,7 @@ SyntaxAnalysatorErrors parseIfKeyword(SyntaxAnalysator* analysator);
 SyntaxAnalysatorErrors parseInputKeyword(SyntaxAnalysator* analysator);
 SyntaxAnalysatorErrors parseOutputKeyword(SyntaxAnalysator* analysator);
 
+SyntaxAnalysatorErrors parseReturnKeyword(SyntaxAnalysator* analysator);
 SyntaxAnalysatorErrors parseFunctionDeclaration(SyntaxAnalysator* analysator);
 SyntaxAnalysatorErrors parseFunctionCall(SyntaxAnalysator* analysator);
 
@@ -190,6 +191,7 @@ SyntaxAnalysatorErrors parseSingleCommandLine(SyntaxAnalysator* analysator) {
 
     TRY_PARSER_FUNC(parseFunctionDeclaration);
     TRY_PARSER_FUNC(parseFunctionCall);
+    TRY_PARSER_FUNC(parseReturnKeyword);
     // openImageOfCurrentStateSyntaxTree(&analysator->tree);
     // openImageOfCurrentStateSyntaxTree(&analysator->tree);
     TRY_PARSER_FUNC(parseVariablesDeclaration);
@@ -295,6 +297,23 @@ SyntaxAnalysatorErrors parseOneFuncArg(SyntaxAnalysator* analysator) {
 
     size_t varOperand = ANALYSATOR_ROOT;
     setNew_KEYWORD_INT_LEXEM_nodeAsRoot(analysator, varOperand, 0);
+
+    return SYNTAX_ANALYSATOR_STATUS_OK;
+}
+
+SyntaxAnalysatorErrors parseReturnKeyword(SyntaxAnalysator* analysator) {
+    IF_ARG_NULL_RETURN(analysator);
+
+    REQUIRE_LEXEM(KEYWORD_RETURN_LEXEM);
+    MOVE_CUR_LEX_PTR();
+
+    size_t resultOperand = 0;
+    if (!isCurLexem_DELIMS_SEMICOLON_LEXEM(analysator)) {
+        IF_ERR_RETURN(parseAssignOperator(analysator));
+        resultOperand = ANALYSATOR_ROOT;
+    }
+
+    setNew_KEYWORD_RETURN_LEXEM_nodeAsRoot(analysator, resultOperand, 0);
 
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }
