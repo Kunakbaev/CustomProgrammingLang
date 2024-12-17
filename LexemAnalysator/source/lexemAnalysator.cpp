@@ -209,6 +209,15 @@ LexemAnalysatorErrors getArrayOfLexems(LexemAnalysator* analysator) {
     tmpString = (char*)calloc(MAX_INPUT_LINE_LEN, sizeof(char));
     IF_NOT_COND_RETURN(tmpString != NULL, LEXEM_ANALYSATOR_MEMORY_ALLOCATION_ERROR);
 
+    #define TRY2ADD_LEXEM2ARR() \
+        do {                \
+            if (strlen(tmpString) > 0) {\
+                Lexem* lexem = &analysator->array[analysator->arrLen++];\
+                initLexemWithString(tmpString, lexem); /* TODO: add error check */\
+                clearTmpString();\
+            }\
+        } while (0)
+
     const char* naturalDelims = "\t\n ";
     size_t curCharInd = 0;
     bool isPrevLexemDelim = false;
@@ -220,12 +229,7 @@ LexemAnalysatorErrors getArrayOfLexems(LexemAnalysator* analysator) {
         bool isNaturalDelim = strchr(naturalDelims, curCh) != NULL;
         LOG_DEBUG_VARS(curCh, i, tmpString, isDelim, isNaturalDelim);
         if (isDelim || isNaturalDelim || isPrevLexemDelim) {
-            if (strlen(tmpString) > 0) {
-                Lexem* lexem = &analysator->array[analysator->arrLen++];
-                initLexemWithString(tmpString, lexem); // TODO: add error check
-                clearTmpString();
-            }
-
+            TRY2ADD_LEXEM2ARR();
             //LOG_DEBUG_VARS("-----------------");
             curCharInd = 0;
             if (isNaturalDelim) {
@@ -239,6 +243,7 @@ LexemAnalysatorErrors getArrayOfLexems(LexemAnalysator* analysator) {
         if (isDelim)
             isPrevLexemDelim = true;
     }
+    TRY2ADD_LEXEM2ARR();
 
     IF_ERR_RETURN(dumpLexemAnalysator(analysator));
     FREE(tmpString);
@@ -256,6 +261,19 @@ size_t getFileSize(FILE* file) {
     return fileSize;
 }
 
+// it will be easier to draw dump and parse this code
+LexemAnalysatorErrors wrapAllCodeInBrackets(char** inputLine) {
+    IF_ARG_NULL_RETURN(*inputLine);
+    //assert(strlen(inputLine) + 2 <=
+    char* strCopy = (char*)calloc(strlen(*inputLine) + 1 + 2, sizeof(char));
+    IF_NOT_COND_RETURN(strCopy != NULL, LEXEM_ANALYSATOR_MEMORY_ALLOCATION_ERROR);
+    strcpy(strCopy, *inputLine);
+
+    sprintf(*inputLine, "{\n%s\n}\n", strCopy);
+    FREE(strCopy);
+    return LEXEM_ANALYSATOR_STATUS_OK;
+}
+
 LexemAnalysatorErrors processSourceFile(LexemAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
 
@@ -265,7 +283,7 @@ LexemAnalysatorErrors processSourceFile(LexemAnalysator* analysator) {
     size_t fileSize = getFileSize(file);
     analysator->inputStringLen = fileSize;
     LOG_DEBUG_VARS(fileSize);
-    analysator->inputString = (char*)calloc(fileSize + 1, sizeof(char)); // +1 for \0 symbol
+    analysator->inputString = (char*)calloc(fileSize + 1 + 5, sizeof(char)); // +1 for \0 symbol, +4 for brackets and \n on both ends
     IF_NOT_COND_RETURN(analysator->inputString != NULL,
                        LEXEM_ANALYSATOR_MEMORY_ALLOCATION_ERROR);
 
@@ -278,6 +296,9 @@ LexemAnalysatorErrors processSourceFile(LexemAnalysator* analysator) {
         // inputStringPtr += snprintf("%s%s", fileSize - (inputStringPtr - analysator->inputString),
         //                            inputStringPtr, lineBuffer);
     }
+
+    wrapAllCodeInBrackets(&analysator->inputString);
+    analysator->inputStringLen += 4;
     LOG_DEBUG_VARS(analysator->inputString);
     LOG_DEBUG_VARS(analysator->inputStringLen);
 

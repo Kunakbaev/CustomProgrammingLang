@@ -45,7 +45,7 @@
         PRINT();                                            \
     } while (0)
 
-#define OPERATOR_LESS_LEXEM_ASM_DEF()                        \
+#define OPERATOR_LESS_LEXEM_ASM_DEF()                       \
     do {                                                    \
         GEN4LEFT();                                         \
         GEN4RIGHT();                                        \
@@ -63,25 +63,25 @@
         PRINT();                                            \
     } while (0)
 
-#define OPERATOR_GREATER_LEXEM_ASM_DEF()                        \
+#define OPERATOR_GREATER_LEXEM_ASM_DEF()                    \
     do {                                                    \
         GEN4LEFT();                                         \
         GEN4RIGHT();                                        \
         ADD_TABS();                                         \
-        ADD2BUFF("greaterCmp\n");                              \
+        ADD2BUFF("greaterCmp\n");                           \
         PRINT();                                            \
     } while (0)
 
-#define OPERATOR_GREATER_OR_EQUAL_LEXEM_ASM_DEF()              \
+#define OPERATOR_GREATER_OR_EQUAL_LEXEM_ASM_DEF()           \
     do {                                                    \
         GEN4LEFT();                                         \
         GEN4RIGHT();                                        \
         ADD_TABS();                                         \
-        ADD2BUFF("greaterOrEqualCmp\n");                       \
+        ADD2BUFF("greaterOrEqualCmp\n");                    \
         PRINT();                                            \
     } while (0)
 
-#define OPERATOR_IS_EQUAL_LEXEM_ASM_DEF()              \
+#define OPERATOR_IS_EQUAL_LEXEM_ASM_DEF()                   \
     do {                                                    \
         GEN4LEFT();                                         \
         GEN4RIGHT();                                        \

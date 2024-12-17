@@ -1,4 +1,10 @@
 
+	in
+	pop x
+
+	in
+	pop y
+
 	whileStart:
 	push x
 	push 10.00
@@ -21,4 +27,10 @@
 	add
 	pop y
 	endif:
+
+	push x
+	out
+
+	push y
+	out
 

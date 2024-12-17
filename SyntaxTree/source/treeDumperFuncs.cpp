@@ -120,7 +120,7 @@ SyntaxTreeErrors dumpSyntaxTree(SyntaxTree* tree) {
             .nodes       = diffNodeTypes[ind],                 \
         }                                                      \
 
-    NODE_RULE(consts,          "#603000", "#704000", CONST_LEXEM_TYPE);
+    NODE_RULE(consts,          "#dd571c", "#ff571c", CONST_LEXEM_TYPE);
     NODE_RULE(identificators,  "#400040", "#600060", IDENTIFICATOR_LEXEM_TYPE);
     NODE_RULE(operators,       "#600000", "#800000", OPERATOR_LEXEM_TYPE);
     NODE_RULE(keywords,        "#0050ff", "#0030cf", KEYWORD_LEXEM_TYPE);

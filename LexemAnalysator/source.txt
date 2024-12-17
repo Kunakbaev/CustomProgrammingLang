@@ -1,8 +1,9 @@
-{
+int add2nums(int a, int b) {
+    a = a + b;
+};
+
+int main() {
     int x, y;
-    while (x <= 10) {
-        x = x + 10;
-    };
-    if (y > 4)
-        y = x + 3;
-}
+    input(x);
+    output(x);
+};
