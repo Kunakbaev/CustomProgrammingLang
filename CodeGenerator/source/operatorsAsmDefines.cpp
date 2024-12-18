@@ -90,4 +90,22 @@
         PRINT();                                            \
     } while (0)
 
+#define OPERATOR_LOGIC_AND_LEXEM_ASM_DEF()                  \
+    do {                                                    \
+        GEN4LEFT();                                         \
+        GEN4RIGHT();                                        \
+        ADD_TABS();                                         \
+        ADD2BUFF("logicAnd\n");                             \
+        PRINT();                                            \
+    } while (0)
+
+
+#define OPERATOR_LOGIC_OR_LEXEM_ASM_DEF()                   \
+    do {                                                    \
+        GEN4LEFT();                                         \
+        GEN4RIGHT();                                        \
+        ADD_TABS();                                         \
+        ADD2BUFF("logicOr\n");                              \
+        PRINT();                                            \
+    } while (0)
 

@@ -1,9 +1,4 @@
 
-int main() {
-    int add2nums() {
-        return;
-    };
-    add2nums();
-};
 
-add2nums();
+int x;
+int x;

@@ -269,7 +269,7 @@ LexemAnalysatorErrors wrapAllCodeInBrackets(char** inputLine) {
     IF_NOT_COND_RETURN(strCopy != NULL, LEXEM_ANALYSATOR_MEMORY_ALLOCATION_ERROR);
     strcpy(strCopy, *inputLine);
 
-    sprintf(*inputLine, "{\n%s\n}\n", strCopy);
+    sprintf(*inputLine, "{\n%s\n};\n", strCopy);
     FREE(strCopy);
     return LEXEM_ANALYSATOR_STATUS_OK;
 }
@@ -283,7 +283,7 @@ LexemAnalysatorErrors processSourceFile(LexemAnalysator* analysator) {
     size_t fileSize = getFileSize(file);
     analysator->inputStringLen = fileSize;
     LOG_DEBUG_VARS(fileSize);
-    analysator->inputString = (char*)calloc(fileSize + 1 + 5, sizeof(char)); // +1 for \0 symbol, +4 for brackets and \n on both ends
+    analysator->inputString = (char*)calloc(fileSize + 1 + 6, sizeof(char)); // +1 for \0 symbol, +4 for brackets and \n on both ends
     IF_NOT_COND_RETURN(analysator->inputString != NULL,
                        LEXEM_ANALYSATOR_MEMORY_ALLOCATION_ERROR);
 
@@ -298,7 +298,7 @@ LexemAnalysatorErrors processSourceFile(LexemAnalysator* analysator) {
     }
 
     wrapAllCodeInBrackets(&analysator->inputString);
-    analysator->inputStringLen += 4;
+    analysator->inputStringLen = strlen(analysator->inputString);
     LOG_DEBUG_VARS(analysator->inputString);
     LOG_DEBUG_VARS(analysator->inputStringLen);
 

@@ -9,11 +9,11 @@
 // bruh, auto is C++ feature, can pass error type to define, no big deal
 #define COMMON_IF_ERR_RETURN(errorTmp, getErrorMessageFunc, OK_STATUS)      \
     do {                                                                    \
-        auto bruh = errorTmp;                                               \
-        if (bruh != OK_STATUS) {                                            \
-            LOG_ERROR(getErrorMessageFunc(bruh));                           \
-            assert(bruh != OK_STATUS);                                      \
-            return bruh;                                                    \
+        auto tmpErr = errorTmp;                                             \
+        if (tmpErr != OK_STATUS) {                                          \
+            LOG_ERROR(getErrorMessageFunc(tmpErr));                         \
+            assert(tmpErr == OK_STATUS);                                    \
+            return tmpErr;                                                  \
         }                                                                   \
     } while(0)
 

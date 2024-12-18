@@ -16,6 +16,7 @@
     do {\
         bool tmpCond = (condition);\
         if (!tmpCond) {\
+            LOG_ERROR(#condition);\
             LOG_ERROR("condition not satisfied"); LOG_ERROR(#condition);\
             return error;\
         }\

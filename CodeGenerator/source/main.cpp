@@ -23,7 +23,7 @@ int main() {
     dumpTableOfIdentificators(&checker);
     semanticCheckOfSyntaxTree(&checker);
 
-    //generateAssemblerCodeFromSyntaxTree(&generator);
+    generateAssemblerCodeFromSyntaxTree(&generator);
 
     destructSemanticChecker(&checker);
     destructCodeGenerator(&generator);
