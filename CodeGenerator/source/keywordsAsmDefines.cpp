@@ -51,7 +51,10 @@
 
 #define KEYWORD_INPUT_LEXEM_ASM_DEF()                       \
     do {                                                    \
-        Node left = *getSyntaxTreeNodePtr(tree, node.left); \
+        Identificator id = {};                                           \
+        Node left = *getSyntaxTreeNodePtr(&generator->tree, node.left); \
+        Node leftleft = *getSyntaxTreeNodePtr(&generator->tree, left.left); \
+        getIdentificatorByLexem(&generator->checker, &leftleft.lexem, &id);  \
         CLEAR_LINE();                                       \
         ADD_TABS();                                         \
         ADD2BUFF("in\n");                                   \
@@ -62,10 +65,13 @@
 
 #define KEYWORD_OUTPUT_LEXEM_ASM_DEF()                      \
     do {                                                    \
-        Node left = *getSyntaxTreeNodePtr(tree, node.left); \
+        Identificator id = {};                                           \
+        Node left = *getSyntaxTreeNodePtr(&generator->tree, node.left); \
+        Node leftleft = *getSyntaxTreeNodePtr(&generator->tree, left.left); \
+        getIdentificatorByLexem(&generator->checker, &leftleft.lexem, &id);  \
         CLEAR_LINE();                                       \
         ADD_TABS();                                         \
-        ADD2BUFF("push %s\n", left.lexem.strRepr);          \
+        ADD2BUFF("push [%d]\n", id.arrInd);          \
         ADD_TABS();                                         \
         ADD2BUFF("out\n");                                  \
         PRINT();\

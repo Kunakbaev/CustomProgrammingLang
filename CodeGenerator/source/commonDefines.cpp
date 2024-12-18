@@ -1,8 +1,8 @@
 #define GEN4LEFT() \
-    IF_ERR_RETURN(recursiveGenerationOfAssemblerCode(tree, node.left , depthInBlocksOfCode, file))
+    IF_ERR_RETURN(recursiveGenerationOfAssemblerCode(generator, node.left , depthInBlocksOfCode, file))
 
 #define GEN4RIGHT() \
-    IF_ERR_RETURN(recursiveGenerationOfAssemblerCode(tree, node.right, depthInBlocksOfCode, file))
+    IF_ERR_RETURN(recursiveGenerationOfAssemblerCode(generator, node.right, depthInBlocksOfCode, file))
 
 #define PRINT() fprintf(file, "%s", line)
 

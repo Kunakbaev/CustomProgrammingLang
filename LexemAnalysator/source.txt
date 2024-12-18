@@ -1,4 +1,9 @@
 
 
-int x;
-int x;
+int x, y;
+x = (x + 10) * (y + 20);
+x = x + y;
+output(x);
+output(y);
+
+add2nums();

@@ -36,13 +36,15 @@
         PRINT();                                            \
     } while (0)
 
-#define OPERATOR_ASSIGN_LEXEM_ASM_DEF()                     \
-    do {                                                    \
-        GEN4RIGHT();                                        \
-        ADD_TABS();                                         \
-        Node left = *getSyntaxTreeNodePtr(tree, node.left); \
-        ADD2BUFF("pop %s\n", left.lexem.strRepr);           \
-        PRINT();                                            \
+#define OPERATOR_ASSIGN_LEXEM_ASM_DEF()                                  \
+    do {                                                                 \
+        GEN4RIGHT();                                                     \
+        ADD_TABS();                                                      \
+        Identificator id = {};                                           \
+        Node left = *getSyntaxTreeNodePtr(&generator->tree, node.left);  \
+        getIdentificatorByLexem(&generator->checker, &left.lexem, &id);  \
+        ADD2BUFF("pop [%d]\n", id.arrInd);                               \
+        PRINT();                                                         \
     } while (0)
 
 #define OPERATOR_LESS_LEXEM_ASM_DEF()                       \

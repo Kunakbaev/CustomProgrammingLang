@@ -5,7 +5,7 @@
 #include "../../SyntaxTree/include/syntaxTree.hpp"
 #include "../../LexemsRealizations/include/lexemsRealizations.hpp"
 
-enum IDENTIFICATOR_TYPE {
+enum IdentificatorType {
     INVALID                     = 0,
     VARIABLE_IDENTIFICATOR      = 1,
     FUNCTION_IDENTIFICATOR      = 2,
@@ -14,8 +14,9 @@ enum IDENTIFICATOR_TYPE {
 struct Identificator {
     size_t                      declNodeInd;
     Lexem                       lexem;
-    IDENTIFICATOR_TYPE          type;
+    IdentificatorType           type;
     Node*                       scopeNode;
+    size_t                      arrInd;
 };
 
 struct SemanticChecker {
@@ -30,6 +31,11 @@ struct SemanticChecker {
 SemanticCheckerErrors constructSemanticChecker(SemanticChecker* checker, const SyntaxTree* tree);
 SemanticCheckerErrors semanticCheckOfSyntaxTree(SemanticChecker* checker);
 SemanticCheckerErrors buildTableOfIdentificators(SemanticChecker* checker);
+SemanticCheckerErrors getIdentificatorByLexem(
+    const SemanticChecker* checker,
+    const Lexem*           lexem,
+    Identificator*         result
+);
 SemanticCheckerErrors dumpTableOfIdentificators(SemanticChecker* checker);
 SemanticCheckerErrors destructSemanticChecker(SemanticChecker* checker);
 

@@ -233,12 +233,11 @@ SyntaxTreeErrors destructSyntaxTree(SyntaxTree* tree) {
         Node* node = &tree->memBuff[i];
         if (node->lexem.type == IDENTIFICATOR_LEXEM_TYPE ||
             node->lexem.type == CONST_LEXEM_TYPE) {
-            LOG_DEBUG_VARS(node->lexem.strRepr, i);
+            //LOG_DEBUG_VARS(node->lexem.strRepr, i);
             FREE(node->lexem.strRepr);
         }
     }
 
-    LOG_DEBUG_VARS(&tree->dumper);
     FREE(tree->memBuff);
 
     tree->memBuffSize   = 0;
