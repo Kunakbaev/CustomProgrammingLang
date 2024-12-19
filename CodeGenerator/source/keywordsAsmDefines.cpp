@@ -79,15 +79,14 @@ static CodeGeneratorErrors recursiveGenerationOfCodeForInputOrOutput(
         Identificator curId = {};
         getIdentificatorByLexem(&generator->checker, &lexem, &curId);
         if (isOutput) {
-            ADD_TABS();
-            ADD2BUFF("push [%d]\n", curId.arrInd);
+            PUSH_VAR_IDENTIFICATOR(lexem);
             ADD_TABS();
             ADD2BUFF("out\n");
         } else {
             ADD_TABS();
             ADD2BUFF("in\n");
             ADD_TABS();
-            ADD2BUFF("pop [%d]\n", curId.arrInd);
+            POP_VAR_IDENTIFICATOR(lexem);
         }
         PRINT();
         return CODE_GENERATOR_STATUS_OK;
@@ -114,13 +113,13 @@ static CodeGeneratorErrors recursiveGenerationOfCodeForInputOrOutput(
 #define KEYWORD_INPUT_LEXEM_ASM_DEF()                       \
     do {                                                    \
         IF_ERR_RETURN(recursiveGenerationOfCodeForInputOrOutput(\
-            generator, curNodeInd, depthInBlocksOfCode, file, id, false));\
+            generator, curNodeInd, depthInBlocksOfCode, file, curFuncBody, false));\
     } while (0)
 
 #define KEYWORD_OUTPUT_LEXEM_ASM_DEF()                       \
     do {                                                    \
         IF_ERR_RETURN(recursiveGenerationOfCodeForInputOrOutput(\
-            generator, curNodeInd, depthInBlocksOfCode, file, id, true));\
+            generator, curNodeInd, depthInBlocksOfCode, file, curFuncBody, true));\
     } while (0)
 
 #define KEYWORD_RETURN_LEXEM_ASM_DEF()                      \

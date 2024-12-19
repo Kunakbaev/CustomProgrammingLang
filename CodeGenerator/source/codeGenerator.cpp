@@ -64,74 +64,64 @@ CodeGeneratorErrors assemblerCodeForConst(const Node* node, char* linePtr) {
 #include "keywordsAsmDefines.cpp"
 #include "operatorsAsmDefines.cpp"
 
-CodeGeneratorErrors recursiveGenerationOfAssemblerCode(CodeGenerator* generator,
-                                                       size_t curNodeInd, size_t depthInBlocksOfCode,
-                                                       FILE* file, Identificator id);
-
-CodeGeneratorErrors assemblerCodeForDeclarationOfIdentificator(
-    const CodeGenerator*    generator,
-    const Node*             node,
-    char*                   linePtr,
-    bool*                   isFuncDecl
+CodeGeneratorErrors saveFuncLocalVariables(
+    CodeGenerator*          generator,
+    size_t                  depthInBlocksOfCode,
+    FILE*                   file,
+    Identificator           curFuncBody,
+    char* linePtr
 ) {
-    IF_ARG_NULL_RETURN(node);
-    IF_ARG_NULL_RETURN(linePtr);
-    IF_ARG_NULL_RETURN(isFuncDecl);
+    CLEAR_LINE();
 
-    Identificator id = {};
-    Lexem lexem = node->lexem;
-    getIdentificatorByLexem(&generator->checker, &lexem, &id);
-
-    switch (id.type) {
-        case VARIABLE_IDENTIFICATOR:
-            break;
-        case FUNCTION_IDENTIFICATOR:
-            ADD2BUFF("%s:\n", lexem.strRepr);
-            *isFuncDecl = true;
-            break;
-        default:
-            assert(false);
+    for (size_t varInd = 0; varInd < curFuncBody.function.numOfLocalVars; ++varInd) {
+        size_t varArrInd = curFuncBody.function.arrOfLocalVars[varInd];
+        Identificator var = generator->checker.tableOfVars[varArrInd]; // TODO: add getter func
+        LOG_DEBUG_VARS(varArrInd, var.lexem.strRepr, var.lexem.type);
+        PUSH_VAR_IDENTIFICATOR(var.lexem);
     }
 
-    return CODE_GENERATOR_STATUS_OK;
+    ADD_TABS();
+    ADD2BUFF("push BX\n");
+    ADD_TABS();
+    ADD2BUFF("push %d\n", curFuncBody.function.numOfLocalVars);
+    ADD_TABS();
+    ADD2BUFF("add\n");
+    ADD_TABS();
+    ADD2BUFF("pop BX\n");
+    PRINT();
+    CLEAR_LINE();
 }
 
-CodeGeneratorErrors assemblerCodeForIdentificator(
-    const CodeGenerator*    generator,
-    const Node*             node,
-    char*                   linePtr,
-    bool*                   isFuncDecl
+CodeGeneratorErrors loadFuncLocalVariables(
+    CodeGenerator*          generator,
+    size_t                  depthInBlocksOfCode,
+    FILE*                   file,
+    Identificator           curFuncBody,
+    char* linePtr
 ) {
-    IF_ARG_NULL_RETURN(node);
-    IF_ARG_NULL_RETURN(linePtr);
-    IF_ARG_NULL_RETURN(isFuncDecl);
-
-    Identificator id = {};
-    Lexem lexem = node->lexem;
-    getIdentificatorByLexem(&generator->checker, &lexem, &id);
-
-    if (node->memBuffIndex == id.declNodeInd) {
-        LOG_ERROR("DECLARATION");
-        IF_ERR_RETURN(assemblerCodeForDeclarationOfIdentificator(
-                      generator, node, linePtr, isFuncDecl));
+    if (curFuncBody.type == INVALID_IDENTIFICATOR) // this is global scope
         return CODE_GENERATOR_STATUS_OK;
+
+    CLEAR_LINE();
+    ADD_TABS();
+    ADD2BUFF("push BX\n");
+    ADD_TABS();
+    ADD2BUFF("push %d\n", curFuncBody.function.numOfLocalVars);
+    ADD_TABS();
+    ADD2BUFF("sub\n");
+    ADD_TABS();
+    ADD2BUFF("pop BX\n");
+
+    for (int varInd = curFuncBody.function.numOfLocalVars - 1; varInd >= 0; --varInd) {
+        size_t varArrInd = curFuncBody.function.arrOfLocalVars[varInd];
+        Identificator var = generator->checker.tableOfVars[varArrInd]; // TODO: add getter func
+        LOG_DEBUG_VARS(varArrInd, var.lexem.strRepr, var.lexem.type);
+        POP_VAR_IDENTIFICATOR(var.lexem);
     }
 
-    // usage of identificator case
-    switch (id.type) {
-        case VARIABLE_IDENTIFICATOR:
-            ADD2BUFF("push [%d]\n", id.arrInd);
-            break;
-        case FUNCTION_IDENTIFICATOR:
-            ADD2BUFF("call %s:\n", lexem.strRepr);
-            break;
-        default:
-            assert(false);
-    }
-
-    //assert(false);
-
-    return CODE_GENERATOR_STATUS_OK;
+    ADD2BUFF("\n");
+    PRINT();
+    CLEAR_LINE();
 }
 
 size_t numOfLabelsBefore = 0; // FIXME: мега костыль
@@ -141,7 +131,7 @@ CodeGeneratorErrors recursiveGenerationOfAssemblerCode(
     size_t                  curNodeInd,
     size_t                  depthInBlocksOfCode,
     FILE*                   file,
-    Identificator           id
+    Identificator           curFuncBody
 ) {
     IF_ARG_NULL_RETURN(generator);
     IF_ARG_NULL_RETURN(file);
@@ -153,10 +143,19 @@ CodeGeneratorErrors recursiveGenerationOfAssemblerCode(
     Lexem lexem = node.lexem;
     char* linePtr = line;
     //LOG_DEBUG_VARS(depthInBlocksOfCode);
-    LOG_DEBUG_VARS(lexem.strRepr);
+    LOG_DEBUG_VARS(lexem.strRepr, curFuncBody.type);
 
-    // if (lexem.lexemSpecificName == KEYWORD_INT_LEXEM)
-    //     return CODE_GENERATOR_STATUS_OK;
+    CLEAR_LINE();
+    if (lexem.lexemSpecificName == KEYWORD_INT_LEXEM) { // not return only in case of func declaration
+        Node left = *getSyntaxTreeNodePtr(&generator->tree, node.left);
+        if (left.lexem.type != IDENTIFICATOR_LEXEM_TYPE)
+            return CODE_GENERATOR_STATUS_OK;
+
+        Identificator id = {};
+        getIdentificatorByLexem(&generator->checker, &left.lexem, &id);
+        if (id.type != FUNCTION_IDENTIFICATOR)
+            return CODE_GENERATOR_STATUS_OK;
+    }
 
     if (lexem.type == CONST_LEXEM_TYPE) {
         ADD_TABS();
@@ -165,49 +164,79 @@ CodeGeneratorErrors recursiveGenerationOfAssemblerCode(
         CLEAR_LINE();
         return CODE_GENERATOR_STATUS_OK;
     }
+
+    // FIXME:
+    // FIXME:
+    // FIXME:
     if (lexem.type == IDENTIFICATOR_LEXEM_TYPE) {
-        // FIXME: cringe
-//         Identificator curId = {};
-//         getIdentificatorByLexem(&generator->checker, &lexem, &curId);
-//         if (id.type != INVALID_IDENTIFICATOR &&
-//             curId.type == FUNCTION_IDENTIFICATOR &&
-//             curId.declNodeInd != curNodeInd) { // ASK: is it ok to declare function inside a function?
-//             // BX - how deep we are, how many func calls was before, recursion depth
-//             // also we can just add generator->checker.tableArrLen which is faster than mul instruction
-//             ADD2BUFF("push BX\n");
-//             ADD2BUFF("push 1\n");
-//             ADD2BUFF("add\n");
-//             // ADD2BUFF("push %d\n", generator->checker.tableArrLen); // FIXME: BRUH, to much memory is not used
-//             // ADD2BUFF("mul\n");
-//             ADD2BUFF("call %s:\n", curId.lexem.strRepr);
-//             ADD2BUFF("pop BX");
-//         }
-//
-//         if (id.type != INVALID_IDENTIFICATOR &&
-//             curId.type == VARIABLE_IDENTIFICATOR &&
-//             curId.declNodeInd != curNodeInd) {
-//             // BRUH
-//             ADD2BUFF("push BX\n");
-//             ADD2BUFF("push BX\n");
-//             ADD2BUFF("push %d\n", generator->checker.tableArrLen); // FIXME: BRUH, to much memory is not used
-//             ADD2BUFF("mul\n");
-//             ADD2BUFF("pop BX\n");
-//             ADD2BUFF("push [BX + %d]\n", curId.arrInd);
-//             ADD2BUFF("pop BX\n");
-//         }
-
-
-
-        ADD_TABS();
-        bool isFuncDecl = false;
-        IF_ERR_RETURN(assemblerCodeForIdentificator(generator, &node, linePtr, &isFuncDecl));
-        PRINT();
         CLEAR_LINE();
-        if (!isFuncDecl)
-            return CODE_GENERATOR_STATUS_OK;
+        Identificator id = {};
+        getIdentificatorByLexem(&generator->checker, &lexem, &id);
+        size_t funcLabelInd = -1;
+        if (id.declNodeInd == curNodeInd) { // declaration
+            if (id.type == FUNCTION_IDENTIFICATOR) {
+                ADD_TABS();
+                funcLabelInd = ++numOfLabelsBefore;
+                ADD2BUFF("jmp funcSafetyLabel%d:\n", funcLabelInd);
+                ADD_TABS();
+                LOG_DEBUG_VARS("func declaration");
+                ADD2BUFF("%s:\n", id.lexem.strRepr);
+                PRINT();
+                CLEAR_LINE();
+                curFuncBody = id; // we enter function body
+                LOG_DEBUG_VARS(curFuncBody.type);
+            }
+        } else {
+            if (id.type == FUNCTION_IDENTIFICATOR) { // function call
+                LOG_ERROR("i am function");
+                LOG_DEBUG_VARS(curFuncBody.type);
+                LOG_ERROR("callllll");
+                IF_ERR_RETURN(saveFuncLocalVariables(
+                    generator, depthInBlocksOfCode, file, curFuncBody, linePtr));
 
+                ADD_TABS();
+                ADD2BUFF("\n");
+
+                LOG_DEBUG_VARS("right subtree recursion");
+                PRINT();
+                CLEAR_LINE();
+                GEN4LEFT();
+                CLEAR_LINE();
+
+                ADD_TABS();
+                ADD2BUFF("call %s:\n", id.lexem.strRepr);
+                ADD_TABS();
+                ADD2BUFF("\n");
+                PRINT();
+                CLEAR_LINE();
+
+                IF_ERR_RETURN(loadFuncLocalVariables(
+                    generator, depthInBlocksOfCode, file, curFuncBody, linePtr));
+
+                PRINT();
+                CLEAR_LINE();
+
+                return CODE_GENERATOR_STATUS_OK;
+            } else { // variable usage
+                LOG_ERROR("push var");
+                PUSH_VAR_IDENTIFICATOR(lexem);
+
+                PRINT();
+                CLEAR_LINE();
+            }
+        }
+
+        CLEAR_LINE();
         GEN4LEFT();
         GEN4RIGHT();
+
+        if (id.declNodeInd == curNodeInd && id.type == FUNCTION_IDENTIFICATOR) {
+            CLEAR_LINE();
+            ADD_TABS();
+            ADD2BUFF("funcSafetyLabel%d:\n", funcLabelInd);
+            PRINT();
+            CLEAR_LINE();
+        }
         return CODE_GENERATOR_STATUS_OK;
     }
 

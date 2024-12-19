@@ -157,6 +157,7 @@ SemanticCheckerErrors getIdentificatorByLexem(
     const Lexem*           lexem,
     Identificator*         result
 ) {
+    LOG_DEBUG_VARS(lexem->strRepr);
     IF_ARG_NULL_RETURN(checker);
     IF_ARG_NULL_RETURN(lexem);
     IF_ARG_NULL_RETURN(result);
@@ -330,6 +331,36 @@ SemanticCheckerErrors recursiveAddOfIdentificatorsFromTree(
 //     return SEMANTIC_CHECKER_STATUS_OK;
 // }
 
+static SemanticCheckerErrors findLocalVarsForFuncRecursive(
+    SemanticChecker* checker,
+    size_t curNodeInd,
+    FunctionIdentificator* function
+) {
+    IF_ARG_NULL_RETURN(checker);
+    IF_ARG_NULL_RETURN(function);
+
+    if (!curNodeInd)
+        return SEMANTIC_CHECKER_STATUS_OK;
+
+    Node node = *getSyntaxTreeNodePtr(checker->tree, curNodeInd);
+    Lexem lexem = node.lexem;
+
+    if (lexem.type == IDENTIFICATOR_LEXEM_TYPE) {
+        Identificator id = {};
+        getIdentificatorByLexem(checker, &lexem, &id);
+
+        if (id.type == VARIABLE_IDENTIFICATOR &&
+            id.declNodeInd == curNodeInd) { // declaration of var
+            function->arrOfLocalVars[function->numOfLocalVars++] = id.arrInd;
+            checker->tableOfVars[id.arrInd].localVarInd = function->numOfLocalVars - 1;
+        }
+    }
+
+    IF_ERR_RETURN(findLocalVarsForFuncRecursive(checker, node.left,  function));
+    IF_ERR_RETURN(findLocalVarsForFuncRecursive(checker, node.right, function));
+
+    return SEMANTIC_CHECKER_STATUS_OK;
+}
 
 static SemanticCheckerErrors findArgsForFunctions(
     SemanticChecker* checker
@@ -346,37 +377,13 @@ static SemanticCheckerErrors findArgsForFunctions(
         Node funcNode      = *getSyntaxTreeNodePtr(checker->tree, func.declNodeInd);
         Node argsScopeNode = *getSyntaxTreeNodePtr(checker->tree, funcNode.right);
 
-        size_t cntArgs = 0;
-        for (size_t argInd = 0; argInd < checker->tableArrLen; ++argInd) {
-            Identificator arg = checker->tableOfVars[funcInd];
-            if (arg.type != VARIABLE_IDENTIFICATOR ||
-                arg.scopeNode->memBuffIndex != argsScopeNode.memBuffIndex)
-                continue;
-            ++cntArgs;
-        }
-
-
-        // FIXME: cringe and copypaste?
-
-
+        const size_t MAX_NUM_OF_LOCAL_VARS = 1 << 10; // FIXME: 2 passes also is cringe, vector?
         FunctionIdentificator function = {};
-        function.numOfLocalVars = cntArgs;
-        function.arrOfLocalVars = (size_t*)calloc(cntArgs, sizeof(size_t));
+        function.arrOfLocalVars = (size_t*)calloc(MAX_NUM_OF_LOCAL_VARS, sizeof(size_t));
         IF_NOT_COND_RETURN(function.arrOfLocalVars != NULL,
-                           SEMANTIC_CHECKER_MEMORY_ALLOCATION_ERROR);
+                            SEMANTIC_CHECKER_MEMORY_ALLOCATION_ERROR);
 
-        cntArgs = 0;
-        function.minRamIndex = -1; // FIXME:
-        for (size_t localVarInd = 0; localVarInd < checker->tableArrLen; ++localVarInd) {
-            Identificator arg = checker->tableOfVars[funcInd];
-            if (arg.type != VARIABLE_IDENTIFICATOR ||
-                arg.scopeNode->memBuffIndex != argsScopeNode.memBuffIndex)
-                continue;
-
-            function.arrOfLocalVars[cntArgs++] = localVarInd;
-            if (function.minRamIndex == -1)
-                function.minRamIndex = localVarInd;
-        }
+        IF_ERR_RETURN(findLocalVarsForFuncRecursive(checker, func.declNodeInd, &function));
 
         checker->tableOfVars[funcInd].function = function;
     }

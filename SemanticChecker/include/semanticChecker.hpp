@@ -23,6 +23,7 @@ struct Identificator {
     IdentificatorType           type;
     Node*                       scopeNode;
     size_t                      arrInd;
+    size_t                      localVarInd;
     FunctionIdentificator       function;
 };
 

@@ -39,11 +39,9 @@
 #define OPERATOR_ASSIGN_LEXEM_ASM_DEF()                                  \
     do {                                                                 \
         GEN4RIGHT();                                                     \
-        ADD_TABS();                                                      \
-        Identificator id = {};                                           \
         Node left = *getSyntaxTreeNodePtr(&generator->tree, node.left);  \
-        getIdentificatorByLexem(&generator->checker, &left.lexem, &id);  \
-        ADD2BUFF("pop [%d]\n", id.arrInd);                               \
+        LOG_DEBUG_VARS("assing pop var", left.lexem.strRepr);\
+        POP_VAR_IDENTIFICATOR(left.lexem);                               \
         PRINT();                                                         \
     } while (0)
 
