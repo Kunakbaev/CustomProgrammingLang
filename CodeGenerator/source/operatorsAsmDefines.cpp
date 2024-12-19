@@ -88,7 +88,7 @@
         GEN4LEFT();                                         \
         GEN4RIGHT();                                        \
         ADD_TABS();                                         \
-        ADD2BUFF("isEqual\n");                              \
+        ADD2BUFF("isEqualCmp\n");                           \
         PRINT();                                            \
     } while (0)
 

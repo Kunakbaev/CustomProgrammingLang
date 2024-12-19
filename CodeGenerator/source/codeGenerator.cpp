@@ -60,22 +60,38 @@ CodeGeneratorErrors assemblerCodeForConst(const Node* node, char* linePtr) {
     return CODE_GENERATOR_STATUS_OK;
 }
 
+#include "delimsAsmDefines.cpp"
+#include "keywordsAsmDefines.cpp"
+#include "operatorsAsmDefines.cpp"
+
+CodeGeneratorErrors recursiveGenerationOfAssemblerCode(CodeGenerator* generator,
+                                                       size_t curNodeInd, size_t depthInBlocksOfCode,
+                                                       FILE* file, Identificator id);
+
 CodeGeneratorErrors assemblerCodeForDeclarationOfIdentificator(
     const CodeGenerator*    generator,
     const Node*             node,
-    char*                   linePtr
+    char*                   linePtr,
+    bool*                   isFuncDecl
 ) {
     IF_ARG_NULL_RETURN(node);
     IF_ARG_NULL_RETURN(linePtr);
+    IF_ARG_NULL_RETURN(isFuncDecl);
 
     Identificator id = {};
     Lexem lexem = node->lexem;
     getIdentificatorByLexem(&generator->checker, &lexem, &id);
 
-    //switch
-
-    //assert(false);
-    ADD2BUFF("push %s\n", lexem.strRepr);
+    switch (id.type) {
+        case VARIABLE_IDENTIFICATOR:
+            break;
+        case FUNCTION_IDENTIFICATOR:
+            ADD2BUFF("%s:\n", lexem.strRepr);
+            *isFuncDecl = true;
+            break;
+        default:
+            assert(false);
+    }
 
     return CODE_GENERATOR_STATUS_OK;
 }
@@ -83,18 +99,21 @@ CodeGeneratorErrors assemblerCodeForDeclarationOfIdentificator(
 CodeGeneratorErrors assemblerCodeForIdentificator(
     const CodeGenerator*    generator,
     const Node*             node,
-    char*                   linePtr
+    char*                   linePtr,
+    bool*                   isFuncDecl
 ) {
     IF_ARG_NULL_RETURN(node);
     IF_ARG_NULL_RETURN(linePtr);
+    IF_ARG_NULL_RETURN(isFuncDecl);
 
     Identificator id = {};
     Lexem lexem = node->lexem;
     getIdentificatorByLexem(&generator->checker, &lexem, &id);
 
     if (node->memBuffIndex == id.declNodeInd) {
+        LOG_ERROR("DECLARATION");
         IF_ERR_RETURN(assemblerCodeForDeclarationOfIdentificator(
-                      generator, node, linePtr));
+                      generator, node, linePtr, isFuncDecl));
         return CODE_GENERATOR_STATUS_OK;
     }
 
@@ -115,13 +134,16 @@ CodeGeneratorErrors assemblerCodeForIdentificator(
     return CODE_GENERATOR_STATUS_OK;
 }
 
-#include "delimsAsmDefines.cpp"
-#include "keywordsAsmDefines.cpp"
-#include "operatorsAsmDefines.cpp"
+size_t numOfLabelsBefore = 0; // FIXME: мега костыль
 
-CodeGeneratorErrors recursiveGenerationOfAssemblerCode(CodeGenerator* generator,
-                                                       size_t curNodeInd, size_t depthInBlocksOfCode,
-                                                       FILE* file) {
+CodeGeneratorErrors recursiveGenerationOfAssemblerCode(
+    CodeGenerator*          generator,
+    size_t                  curNodeInd,
+    size_t                  depthInBlocksOfCode,
+    FILE*                   file,
+    Identificator           id
+) {
+    IF_ARG_NULL_RETURN(generator);
     IF_ARG_NULL_RETURN(file);
 
     if (!curNodeInd)
@@ -133,8 +155,8 @@ CodeGeneratorErrors recursiveGenerationOfAssemblerCode(CodeGenerator* generator,
     //LOG_DEBUG_VARS(depthInBlocksOfCode);
     LOG_DEBUG_VARS(lexem.strRepr);
 
-    if (lexem.lexemSpecificName == KEYWORD_INT_LEXEM)
-        return CODE_GENERATOR_STATUS_OK;
+    // if (lexem.lexemSpecificName == KEYWORD_INT_LEXEM)
+    //     return CODE_GENERATOR_STATUS_OK;
 
     if (lexem.type == CONST_LEXEM_TYPE) {
         ADD_TABS();
@@ -144,10 +166,48 @@ CodeGeneratorErrors recursiveGenerationOfAssemblerCode(CodeGenerator* generator,
         return CODE_GENERATOR_STATUS_OK;
     }
     if (lexem.type == IDENTIFICATOR_LEXEM_TYPE) {
+        // FIXME: cringe
+//         Identificator curId = {};
+//         getIdentificatorByLexem(&generator->checker, &lexem, &curId);
+//         if (id.type != INVALID_IDENTIFICATOR &&
+//             curId.type == FUNCTION_IDENTIFICATOR &&
+//             curId.declNodeInd != curNodeInd) { // ASK: is it ok to declare function inside a function?
+//             // BX - how deep we are, how many func calls was before, recursion depth
+//             // also we can just add generator->checker.tableArrLen which is faster than mul instruction
+//             ADD2BUFF("push BX\n");
+//             ADD2BUFF("push 1\n");
+//             ADD2BUFF("add\n");
+//             // ADD2BUFF("push %d\n", generator->checker.tableArrLen); // FIXME: BRUH, to much memory is not used
+//             // ADD2BUFF("mul\n");
+//             ADD2BUFF("call %s:\n", curId.lexem.strRepr);
+//             ADD2BUFF("pop BX");
+//         }
+//
+//         if (id.type != INVALID_IDENTIFICATOR &&
+//             curId.type == VARIABLE_IDENTIFICATOR &&
+//             curId.declNodeInd != curNodeInd) {
+//             // BRUH
+//             ADD2BUFF("push BX\n");
+//             ADD2BUFF("push BX\n");
+//             ADD2BUFF("push %d\n", generator->checker.tableArrLen); // FIXME: BRUH, to much memory is not used
+//             ADD2BUFF("mul\n");
+//             ADD2BUFF("pop BX\n");
+//             ADD2BUFF("push [BX + %d]\n", curId.arrInd);
+//             ADD2BUFF("pop BX\n");
+//         }
+
+
+
         ADD_TABS();
-        IF_ERR_RETURN(assemblerCodeForIdentificator(generator, &node, linePtr));
+        bool isFuncDecl = false;
+        IF_ERR_RETURN(assemblerCodeForIdentificator(generator, &node, linePtr, &isFuncDecl));
         PRINT();
         CLEAR_LINE();
+        if (!isFuncDecl)
+            return CODE_GENERATOR_STATUS_OK;
+
+        GEN4LEFT();
+        GEN4RIGHT();
         return CODE_GENERATOR_STATUS_OK;
     }
 
@@ -178,7 +238,9 @@ CodeGeneratorErrors generateAssemblerCodeFromSyntaxTree(CodeGenerator* generator
     line = (char*)calloc(MAX_LINE_LEN, sizeof(char));
     IF_NOT_COND_RETURN(line != NULL, CODE_GENERATOR_MEMORY_ALLOCATION_ERROR);
 
-    recursiveGenerationOfAssemblerCode(generator, generator->tree.root, 0, file);
+    Identificator id = {};
+    id.type = INVALID_IDENTIFICATOR;
+    recursiveGenerationOfAssemblerCode(generator, generator->tree.root, 0, file, id);
 
     fclose(file);
 

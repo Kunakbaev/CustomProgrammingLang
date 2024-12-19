@@ -6,9 +6,15 @@
 #include "../../LexemsRealizations/include/lexemsRealizations.hpp"
 
 enum IdentificatorType {
-    INVALID                     = 0,
+     INVALID_IDENTIFICATOR      = 0,
     VARIABLE_IDENTIFICATOR      = 1,
     FUNCTION_IDENTIFICATOR      = 2,
+};
+
+struct FunctionIdentificator {
+    size_t          numOfLocalVars;
+    size_t*         arrOfLocalVars;
+    size_t          minRamIndex;
 };
 
 struct Identificator {
@@ -17,6 +23,7 @@ struct Identificator {
     IdentificatorType           type;
     Node*                       scopeNode;
     size_t                      arrInd;
+    FunctionIdentificator       function;
 };
 
 struct SemanticChecker {

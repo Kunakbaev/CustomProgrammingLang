@@ -239,9 +239,9 @@ static SemanticCheckerErrors findBlockOfCodeNodeForIdentificator(const SemanticC
 }
 
 SemanticCheckerErrors addNewIdentificator(
-    SemanticChecker* checker,
-    Node* node,
-    IdentificatorType idType
+    SemanticChecker*         checker,
+    Node*                    node,
+    IdentificatorType        idType
 ) {
     Node* scopeNode = node;
     IF_ERR_RETURN(findBlockOfCodeNodeForIdentificator(checker, &scopeNode));
@@ -317,12 +317,79 @@ SemanticCheckerErrors recursiveAddOfIdentificatorsFromTree(
 
     return SEMANTIC_CHECKER_STATUS_OK;
 }
+//
+// SemanticCheckerErrors recursiveAddArgsForFunction(
+//     SemanticChecker* checker,
+//     size_t curNodeInd,
+//
+// ) {
+//     IF_ARG_NULL_RETURN(checker);
+//
+//     if (!curNodeInd) return
+//
+//     return SEMANTIC_CHECKER_STATUS_OK;
+// }
+
+
+static SemanticCheckerErrors findArgsForFunctions(
+    SemanticChecker* checker
+) {
+    IF_ARG_NULL_RETURN(checker);
+
+    // works in O(n^2) (n - number of identificators) but it can be done faster: in O(nums in syntax tree),
+    // recursive function from each function node, but I am to lazy
+    for (size_t funcInd = 0; funcInd < checker->tableArrLen; ++funcInd) {
+        Identificator func = checker->tableOfVars[funcInd];
+        if (func.type != FUNCTION_IDENTIFICATOR)
+            continue;
+
+        Node funcNode      = *getSyntaxTreeNodePtr(checker->tree, func.declNodeInd);
+        Node argsScopeNode = *getSyntaxTreeNodePtr(checker->tree, funcNode.right);
+
+        size_t cntArgs = 0;
+        for (size_t argInd = 0; argInd < checker->tableArrLen; ++argInd) {
+            Identificator arg = checker->tableOfVars[funcInd];
+            if (arg.type != VARIABLE_IDENTIFICATOR ||
+                arg.scopeNode->memBuffIndex != argsScopeNode.memBuffIndex)
+                continue;
+            ++cntArgs;
+        }
+
+
+        // FIXME: cringe and copypaste?
+
+
+        FunctionIdentificator function = {};
+        function.numOfLocalVars = cntArgs;
+        function.arrOfLocalVars = (size_t*)calloc(cntArgs, sizeof(size_t));
+        IF_NOT_COND_RETURN(function.arrOfLocalVars != NULL,
+                           SEMANTIC_CHECKER_MEMORY_ALLOCATION_ERROR);
+
+        cntArgs = 0;
+        function.minRamIndex = -1; // FIXME:
+        for (size_t localVarInd = 0; localVarInd < checker->tableArrLen; ++localVarInd) {
+            Identificator arg = checker->tableOfVars[funcInd];
+            if (arg.type != VARIABLE_IDENTIFICATOR ||
+                arg.scopeNode->memBuffIndex != argsScopeNode.memBuffIndex)
+                continue;
+
+            function.arrOfLocalVars[cntArgs++] = localVarInd;
+            if (function.minRamIndex == -1)
+                function.minRamIndex = localVarInd;
+        }
+
+        checker->tableOfVars[funcInd].function = function;
+    }
+
+    return SEMANTIC_CHECKER_STATUS_OK;
+}
 
 SemanticCheckerErrors buildTableOfIdentificators(SemanticChecker* checker) {
     IF_ARG_NULL_RETURN(checker);
 
     IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(
                     checker, checker->tree->root, INVALID_LEXEM));
+    IF_ERR_RETURN(findArgsForFunctions(checker));
 
     return SEMANTIC_CHECKER_STATUS_OK;
 }
@@ -352,6 +419,13 @@ SemanticCheckerErrors dumpTableOfIdentificators(SemanticChecker* checker) {
 
 SemanticCheckerErrors destructSemanticChecker(SemanticChecker* checker) {
     IF_ARG_NULL_RETURN(checker);
+
+    for (size_t arrInd = 0; arrInd < checker->tableArrLen; ++arrInd) {
+        Identificator func = checker->tableOfVars[arrInd];
+        if (func.type != FUNCTION_IDENTIFICATOR)
+            continue;
+        FREE(func.function.arrOfLocalVars);
+    }
 
     FREE(checker->tableOfVars);
     FREE(checker->tinArray);

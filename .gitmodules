@@ -1,0 +1,3 @@
+[submodule "external/SPUprocessorEmulator"]
+	path = external/SPUprocessorEmulator
+	url = https://github.com/Kunakbaev/SPUprocessorEmulator.git

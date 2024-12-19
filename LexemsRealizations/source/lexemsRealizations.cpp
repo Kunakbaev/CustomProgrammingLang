@@ -58,7 +58,8 @@ LexemsRealizationsErrors initLexemWithString(const char* line, Lexem* lexem) {
     // maybe this is const (number or literal) or identificator
 
     assert(strlen(line) > 0);
-    if (isdigit(line[0])) { // this is const number
+    // ASK: cringe, how to do properly
+    if (isdigit(line[0]) || line[0] == '-') { // this is const number
         char* endPtr = NULL;
         errno = 0;
         lexem->doubleData = strtod(line, &endPtr);
