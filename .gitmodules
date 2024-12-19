@@ -1,3 +1,6 @@
 [submodule "external/SPUprocessorEmulator"]
 	path = external/SPUprocessorEmulator
 	url = https://github.com/Kunakbaev/SPUprocessorEmulator.git
+[submodule "external/LoggerLib"]
+	path = external/SPUprocessorEmulator
+	url = https://github.com/Kunakbaev/LoggerLib.git
