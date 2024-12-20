@@ -35,6 +35,7 @@ CodeGeneratorErrors readCodeGeneratorSyntaxTreeFromFile(CodeGenerator* generator
     readSyntaxTreeFromFile(&generator->tree, generator->sourceFilePath);
     buildTableOfIdentificators(&generator->checker);
     dumpTableOfIdentificators(&generator->checker);
+    recursiveFindTinTout(&generator->checker, generator->checker.tree->root);
 
     return CODE_GENERATOR_STATUS_OK;
 }
@@ -64,21 +65,36 @@ CodeGeneratorErrors assemblerCodeForConst(const Node* node, char* linePtr) {
 #include "keywordsAsmDefines.cpp"
 #include "operatorsAsmDefines.cpp"
 
+CodeGeneratorErrors recursiveGenerationOfAssemblerCode(
+    CodeGenerator*          generator,
+    size_t                  curNodeInd,
+    size_t                  depthInBlocksOfCode,
+    FILE*                   file,
+    Identificator           curFuncBody
+);
+
 CodeGeneratorErrors saveFuncLocalVariables(
     CodeGenerator*          generator,
+    Node                    node,
     size_t                  depthInBlocksOfCode,
     FILE*                   file,
     Identificator           curFuncBody,
     char* linePtr
 ) {
     CLEAR_LINE();
+//
+//     for (size_t varInd = 0; varInd < curFuncBody.function.numOfLocalVars; ++varInd) {
+//         size_t varArrInd = curFuncBody.function.arrOfLocalVars[varInd];
+//         Identificator var = generator->checker.tableOfVars[varArrInd]; // TODO: add getter func
+//         LOG_DEBUG_VARS(varArrInd, var.lexem.strRepr, var.lexem.type);
+//         PUSH_VAR_IDENTIFICATOR(var.lexem);
+//     }
 
-    for (size_t varInd = 0; varInd < curFuncBody.function.numOfLocalVars; ++varInd) {
-        size_t varArrInd = curFuncBody.function.arrOfLocalVars[varInd];
-        Identificator var = generator->checker.tableOfVars[varArrInd]; // TODO: add getter func
-        LOG_DEBUG_VARS(varArrInd, var.lexem.strRepr, var.lexem.type);
-        PUSH_VAR_IDENTIFICATOR(var.lexem);
-    }
+    LOG_DEBUG_VARS("right subtree recursion");
+    PRINT();
+    CLEAR_LINE();
+    GEN4LEFT();
+    CLEAR_LINE();
 
     ADD_TABS();
     ADD2BUFF("push BX\n");
@@ -112,12 +128,12 @@ CodeGeneratorErrors loadFuncLocalVariables(
     ADD_TABS();
     ADD2BUFF("pop BX\n");
 
-    for (int varInd = curFuncBody.function.numOfLocalVars - 1; varInd >= 0; --varInd) {
-        size_t varArrInd = curFuncBody.function.arrOfLocalVars[varInd];
-        Identificator var = generator->checker.tableOfVars[varArrInd]; // TODO: add getter func
-        LOG_DEBUG_VARS(varArrInd, var.lexem.strRepr, var.lexem.type);
-        POP_VAR_IDENTIFICATOR(var.lexem);
-    }
+    // for (int varInd = curFuncBody.function.numOfLocalVars - 1; varInd >= 0; --varInd) {
+    //     size_t varArrInd = curFuncBody.function.arrOfLocalVars[varInd];
+    //     Identificator var = generator->checker.tableOfVars[varArrInd]; // TODO: add getter func
+    //     LOG_DEBUG_VARS(varArrInd, var.lexem.strRepr, var.lexem.type);
+    //     POP_VAR_IDENTIFICATOR(var.lexem);
+    // }
 
     ADD2BUFF("\n");
     PRINT();
@@ -181,6 +197,15 @@ CodeGeneratorErrors recursiveGenerationOfAssemblerCode(
                 ADD_TABS();
                 LOG_DEBUG_VARS("func declaration");
                 ADD2BUFF("%s:\n", id.lexem.strRepr);
+
+                LOG_DEBUG_VARS(id.function.numOfArgs);
+                for (size_t argInd = 0; argInd < id.function.numOfArgs; ++argInd) {
+                    size_t varArrInd = id.function.argumentVars[argInd];
+                    Identificator var = generator->checker.tableOfVars[varArrInd]; // TODO: add getter func
+                    LOG_DEBUG_VARS(varArrInd, var.lexem.strRepr, var.lexem.type);
+                    POP_VAR_IDENTIFICATOR(var.lexem);
+                }
+
                 PRINT();
                 CLEAR_LINE();
                 curFuncBody = id; // we enter function body
@@ -192,16 +217,10 @@ CodeGeneratorErrors recursiveGenerationOfAssemblerCode(
                 LOG_DEBUG_VARS(curFuncBody.type);
                 LOG_ERROR("callllll");
                 IF_ERR_RETURN(saveFuncLocalVariables(
-                    generator, depthInBlocksOfCode, file, curFuncBody, linePtr));
+                    generator, node, depthInBlocksOfCode, file, curFuncBody, linePtr));
 
                 ADD_TABS();
                 ADD2BUFF("\n");
-
-                LOG_DEBUG_VARS("right subtree recursion");
-                PRINT();
-                CLEAR_LINE();
-                GEN4LEFT();
-                CLEAR_LINE();
 
                 ADD_TABS();
                 ADD2BUFF("call %s:\n", id.lexem.strRepr);
@@ -213,6 +232,8 @@ CodeGeneratorErrors recursiveGenerationOfAssemblerCode(
                 IF_ERR_RETURN(loadFuncLocalVariables(
                     generator, depthInBlocksOfCode, file, curFuncBody, linePtr));
 
+                ADD_TABS();
+                ADD2BUFF("push AX\n");
                 PRINT();
                 CLEAR_LINE();
 
@@ -270,6 +291,11 @@ CodeGeneratorErrors generateAssemblerCodeFromSyntaxTree(CodeGenerator* generator
     Identificator id = {};
     id.type = INVALID_IDENTIFICATOR;
     recursiveGenerationOfAssemblerCode(generator, generator->tree.root, 0, file, id);
+
+    clearLine();
+    char* linePtr = line;
+    ADD2BUFF("call main:\n");
+    PRINT();
 
     fclose(file);
 

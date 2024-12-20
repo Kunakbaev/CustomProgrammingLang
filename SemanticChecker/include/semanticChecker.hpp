@@ -14,7 +14,8 @@ enum IdentificatorType {
 struct FunctionIdentificator {
     size_t          numOfLocalVars;
     size_t*         arrOfLocalVars;
-    size_t          minRamIndex;
+    size_t          numOfArgs;
+    size_t*         argumentVars; // actually this array is just a prefix of arrOfLocalVars, so it's enough to store only number of arguments
 };
 
 struct Identificator {
@@ -34,11 +35,16 @@ struct SemanticChecker {
     size_t*                     tinArray;
     size_t*                     toutArray;
     size_t                      timer;
+    size_t                      numOfGlobalVars;
 };
 
 SemanticCheckerErrors constructSemanticChecker(SemanticChecker* checker, const SyntaxTree* tree);
 SemanticCheckerErrors semanticCheckOfSyntaxTree(SemanticChecker* checker);
 SemanticCheckerErrors buildTableOfIdentificators(SemanticChecker* checker);
+SemanticCheckerErrors recursiveFindTinTout(
+    SemanticChecker* checker,
+    size_t curNodeInd
+);
 SemanticCheckerErrors getIdentificatorByLexem(
     const SemanticChecker* checker,
     const Lexem*           lexem,

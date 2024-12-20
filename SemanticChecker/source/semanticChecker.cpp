@@ -3,7 +3,7 @@
 const size_t MAX_NUM_OF_IDENTIFICATORS = 1 << 10;
 const size_t MAX_NUM_OF_NODES_IN_TREE  = 1 << 12;
 
-static SemanticCheckerErrors recursiveFindTinTout(
+SemanticCheckerErrors recursiveFindTinTout(
     SemanticChecker* checker,
     size_t curNodeInd
 ) {
@@ -40,8 +40,6 @@ SemanticCheckerErrors constructSemanticChecker(SemanticChecker* checker, const S
     checker->toutArray = (size_t*)calloc(MAX_NUM_OF_NODES_IN_TREE, sizeof(size_t));
     IF_NOT_COND_RETURN(checker->toutArray != NULL,
                        SEMANTIC_CHECKER_MEMORY_ALLOCATION_ERROR);
-
-    IF_ERR_RETURN(recursiveFindTinTout(checker, checker->tree->root));
 
     return SEMANTIC_CHECKER_STATUS_OK;
 }
@@ -97,7 +95,7 @@ static SemanticCheckerErrors recursiveCheckForIdentficatorsScopes(
     size_t left  = node.left;
     size_t right = node.right;
 
-    LOG_DEBUG_VARS(node.memBuffIndex, left, right);
+    //LOG_DEBUG_VARS(node.memBuffIndex, left, right);
     if (lexem.type == IDENTIFICATOR_LEXEM_TYPE) {
         Identificator id = {};
         LOG_DEBUG_VARS(lexem.strRepr);
@@ -105,7 +103,7 @@ static SemanticCheckerErrors recursiveCheckForIdentficatorsScopes(
         if (id.declNodeInd != curNodeInd) { // that's not a declaration, that's a usage of some identificator
             bool isAncestor = false;
             //LOG_DEBUG_VARS(node.memBuffIndex, id.scopeNode->memBuffIndex);
-            LOG_DEBUG_VARS(id.lexem.strRepr, id.scopeNode->memBuffIndex, id.declNodeInd);
+            LOG_DEBUG_VARS(id.lexem.strRepr, id.scopeNode->memBuffIndex, curNodeInd, id.declNodeInd);
             LOG_ERROR("var check");
             IF_ERR_RETURN(isAncestorInSyntaxTree(checker, id.scopeNode, &node, &isAncestor));
             IF_NOT_COND_RETURN(isAncestor, SEMANTIC_CHECKER_IDENTIFICATOR_USAGE_OUTSIDE_ITS_SCOPE);
@@ -123,11 +121,32 @@ static SemanticCheckerErrors recursiveCheckForIdentficatorsScopes(
     return SEMANTIC_CHECKER_STATUS_OK;
 }
 
+static SemanticCheckerErrors semanticCheckForFuncDeclarations(SemanticChecker* checker) {
+    IF_ARG_NULL_RETURN(checker);
+
+    bool isMainFunctionDeclared = false;
+    for (size_t funcInd = 0; funcInd < checker->tableArrLen; ++funcInd) {
+        Identificator func = checker->tableOfVars[funcInd];
+        if (func.type != FUNCTION_IDENTIFICATOR)
+            continue;
+
+        IF_NOT_COND_RETURN(func.scopeNode->memBuffIndex == checker->tree->root,
+                           SEMANTIC_CHECKER_FUNC_DECLARATION_NOT_IN_GLOBAL_SCOPE);
+
+        if (strcmp(func.lexem.strRepr, "main") == 0)
+            isMainFunctionDeclared = true;
+    }
+    IF_NOT_COND_RETURN(isMainFunctionDeclared,
+                       SEMANTIC_CHECKER_FUNC_MAIN_NOT_FOUNC);
+
+    return SEMANTIC_CHECKER_STATUS_OK;
+}
 
 SemanticCheckerErrors semanticCheckOfSyntaxTree(SemanticChecker* checker) {
     IF_ARG_NULL_RETURN(checker);
 
     IF_ERR_RETURN(recursiveCheckForIdentficatorsScopes(checker, checker->tree->root));
+    IF_ERR_RETURN(semanticCheckForFuncDeclarations(checker));
 
     return SEMANTIC_CHECKER_STATUS_OK;
 }
@@ -217,6 +236,7 @@ static SemanticCheckerErrors findBlockOfCodeNodeForIdentificator(const SemanticC
 
     do {
         size_t parentInd = (*node)->parent;
+        LOG_DEBUG_VARS((*node)->memBuffIndex, parentInd);
         //LOG_DEBUG_VARS((*node)->memBuffIndex, parentInd);
         *node = getSyntaxTreeNodePtr(checker->tree, parentInd);
 
@@ -270,6 +290,7 @@ SemanticCheckerErrors recursiveAddOfIdentificatorsFromTree(
     if (!curNodeInd)
         return SEMANTIC_CHECKER_STATUS_OK;
 
+    LOG_FUNC_STARTED();
     Node node   = *getSyntaxTreeNodePtr(checker->tree, curNodeInd);
     Lexem lexem = node.lexem;
 
@@ -312,9 +333,11 @@ SemanticCheckerErrors recursiveAddOfIdentificatorsFromTree(
     if (childNode.lexem.type == IDENTIFICATOR_LEXEM_TYPE) {
         IF_ERR_RETURN(addNewIdentificator(checker, &childNode, FUNCTION_IDENTIFICATOR));
 
+        LOG_DEBUG_VARS("bim");
         IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(checker, childNode.left,  identificatorDataType));
         IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(checker, childNode.right, identificatorDataType));
     }
+    LOG_FUNC_FINISHED();
 
     return SEMANTIC_CHECKER_STATUS_OK;
 }
@@ -334,14 +357,19 @@ SemanticCheckerErrors recursiveAddOfIdentificatorsFromTree(
 static SemanticCheckerErrors findLocalVarsForFuncRecursive(
     SemanticChecker* checker,
     size_t curNodeInd,
-    FunctionIdentificator* function
+    size_t* arrLen,
+    size_t** array,
+    bool isLocalVarsSearch
 ) {
     IF_ARG_NULL_RETURN(checker);
-    IF_ARG_NULL_RETURN(function);
+    IF_ARG_NULL_RETURN(arrLen);
+    IF_ARG_NULL_RETURN(array);
+    IF_ARG_NULL_RETURN(*array);
 
     if (!curNodeInd)
         return SEMANTIC_CHECKER_STATUS_OK;
 
+    LOG_DEBUG_VARS(curNodeInd);
     Node node = *getSyntaxTreeNodePtr(checker->tree, curNodeInd);
     Lexem lexem = node.lexem;
 
@@ -351,13 +379,13 @@ static SemanticCheckerErrors findLocalVarsForFuncRecursive(
 
         if (id.type == VARIABLE_IDENTIFICATOR &&
             id.declNodeInd == curNodeInd) { // declaration of var
-            function->arrOfLocalVars[function->numOfLocalVars++] = id.arrInd;
-            checker->tableOfVars[id.arrInd].localVarInd = function->numOfLocalVars - 1;
+            (*array)[(*arrLen)++] = id.arrInd;
+            checker->tableOfVars[id.arrInd].localVarInd = (*arrLen) - 1;
         }
     }
 
-    IF_ERR_RETURN(findLocalVarsForFuncRecursive(checker, node.left,  function));
-    IF_ERR_RETURN(findLocalVarsForFuncRecursive(checker, node.right, function));
+    IF_ERR_RETURN(findLocalVarsForFuncRecursive(checker, node.left,  arrLen, array, isLocalVarsSearch));
+    IF_ERR_RETURN(findLocalVarsForFuncRecursive(checker, node.right, arrLen, array, isLocalVarsSearch));
 
     return SEMANTIC_CHECKER_STATUS_OK;
 }
@@ -382,8 +410,15 @@ static SemanticCheckerErrors findArgsForFunctions(
         function.arrOfLocalVars = (size_t*)calloc(MAX_NUM_OF_LOCAL_VARS, sizeof(size_t));
         IF_NOT_COND_RETURN(function.arrOfLocalVars != NULL,
                             SEMANTIC_CHECKER_MEMORY_ALLOCATION_ERROR);
+        function.argumentVars = (size_t*)calloc(MAX_NUM_OF_LOCAL_VARS, sizeof(size_t));
+        IF_NOT_COND_RETURN(function.argumentVars != NULL,
+                            SEMANTIC_CHECKER_MEMORY_ALLOCATION_ERROR);
 
-        IF_ERR_RETURN(findLocalVarsForFuncRecursive(checker, func.declNodeInd, &function));
+        // search of argument (left subtree of function node)
+        IF_ERR_RETURN(findLocalVarsForFuncRecursive(
+            checker, funcNode.left, &function.numOfArgs, &function.argumentVars, false));
+        IF_ERR_RETURN(findLocalVarsForFuncRecursive(
+            checker, funcNode.memBuffIndex, &function.numOfLocalVars, &function.arrOfLocalVars, true));
 
         checker->tableOfVars[funcInd].function = function;
     }
@@ -432,6 +467,7 @@ SemanticCheckerErrors destructSemanticChecker(SemanticChecker* checker) {
         if (func.type != FUNCTION_IDENTIFICATOR)
             continue;
         FREE(func.function.arrOfLocalVars);
+        FREE(func.function.argumentVars);
     }
 
     FREE(checker->tableOfVars);

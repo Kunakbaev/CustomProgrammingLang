@@ -14,3 +14,5 @@ ERROR_UNPACK(IDENTIFICATOR_NOT_FOUND,                    13, "identificator not 
 ERROR_UNPACK(IDENTIFICATOR_USAGE_OUTSIDE_ITS_SCOPE,      14, "identificator is used outside it's scope.\n")
 ERROR_UNPACK(IDENTIFICATOR_USAGE_BEFORE_ITS_DECLARATION, 15, "identificator is used before it's declaration.\n")
 ERROR_UNPACK(IDENTIFICATOR_IS_ALREADY_DECLARED,          16, "identificator has already been declared.\n")
+ERROR_UNPACK(FUNC_MAIN_NOT_FOUNC,                        17, "function main is not found.\n")
+ERROR_UNPACK(FUNC_DECLARATION_NOT_IN_GLOBAL_SCOPE,       18, "function can be declared only in global scope.\n")

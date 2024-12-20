@@ -127,6 +127,8 @@ static CodeGeneratorErrors recursiveGenerationOfCodeForInputOrOutput(
         GEN4LEFT();\
         GEN4RIGHT();\
         ADD_TABS();\
+        ADD2BUFF("pop AX\n");\
+        ADD_TABS();\
         ADD2BUFF("ret\n");\
         PRINT();\
     } while (0)
